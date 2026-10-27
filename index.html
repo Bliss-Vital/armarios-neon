@@ -13,7 +13,10 @@
 :root{
   --bg:#e9ece8; --surface:#f7f8f6; --surface-2:#dfe3dd; --text:#18201a; --muted:#5a655c; --border:#c9cfc6;
   --accent:#4f8f2c; --accent-ink:#ffffff; --accent-soft:#dcebd1;
-  --steel:#b9c0bd; --steel-dark:#8d9592; --steel-in:#a3aaa7; --floor:#d7dbd4; --grid:#bcc3b9; --shelf:#c9cecb;
+  /* móveis de laminado creme com perfis de alumínio, como os do laboratório */
+  --body:#ece8dc; --body-dark:#8a9198; --body-in:#d6d2c6; --shelf:#e3dfd3;
+  --bench-light:#efede6; --bench-dark:#3a3e43; --plastic:#2a2d30; --handle-red:#c8312b;
+  --wall:#d3d8d1; --floor:#bfc5bc; --grid:#a9b0a6;
   --hl:#7fbf4d; --sel:#4f8f2c;
   --warn:#8a5a00; --warn-soft:#f8ecc9; --bad:#b33a2e; --bad-soft:#f7e1dd;
   --f-display:"Nova Round","Barlow",system-ui,sans-serif;
@@ -25,7 +28,9 @@
   :root:not([data-theme="light"]){
     --bg:#121614; --surface:#1a1f1c; --surface-2:#232a25; --text:#e4e9e4; --muted:#98a39a; --border:#313a33;
     --accent:#86c95a; --accent-ink:#0f1a0a; --accent-soft:#223419;
-    --steel:#5d6663; --steel-dark:#434b48; --steel-in:#363d3a; --floor:#1d2320; --grid:#2c3530; --shelf:#4a524f;
+    --body:#9b998f; --body-dark:#5c6268; --body-in:#76746b; --shelf:#868478;
+    --bench-light:#a9a79e; --bench-dark:#25282c; --plastic:#1b1d1f; --handle-red:#a8322b;
+    --wall:#262c29; --floor:#1d2320; --grid:#2c3530;
     --hl:#86c95a; --sel:#a6e07c;
     --warn:#e3b341; --warn-soft:#33290f; --bad:#f08a7e; --bad-soft:#3a1d19;
     color-scheme:dark;
@@ -34,7 +39,9 @@
 :root[data-theme="dark"]{
   --bg:#121614; --surface:#1a1f1c; --surface-2:#232a25; --text:#e4e9e4; --muted:#98a39a; --border:#313a33;
   --accent:#86c95a; --accent-ink:#0f1a0a; --accent-soft:#223419;
-  --steel:#5d6663; --steel-dark:#434b48; --steel-in:#363d3a; --floor:#1d2320; --grid:#2c3530; --shelf:#4a524f;
+  --body:#9b998f; --body-dark:#5c6268; --body-in:#76746b; --shelf:#868478;
+  --bench-light:#a9a79e; --bench-dark:#25282c; --plastic:#1b1d1f; --handle-red:#a8322b;
+  --wall:#262c29; --floor:#1d2320; --grid:#2c3530;
   --hl:#86c95a; --sel:#a6e07c;
   --warn:#e3b341; --warn-soft:#33290f; --bad:#f08a7e; --bad-soft:#3a1d19;
   color-scheme:dark;
@@ -72,15 +79,15 @@ a{color:var(--accent)}
 .labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
 .lbl{position:absolute;left:0;top:0;white-space:nowrap;font:600 12px/1 var(--f-mono);padding:4px 6px;border-radius:5px;
   background:var(--surface);color:var(--text);border:1px solid var(--border);box-shadow:0 1px 3px rgb(0 0 0 / .15)}
-.lbl.cab{font:400 14px/1.15 var(--f-display);padding:6px 9px;text-align:center}
-.lbl.cab small{display:block;font:500 11px/1.2 var(--f-body);color:var(--muted);margin-top:2px}
+.lbl.cab{font:400 15px/1 var(--f-display);padding:5px 8px;text-align:center}
+.lbl.cab small{display:block;font:500 11px/1.2 var(--f-body);color:var(--muted);margin-top:3px}
+.lbl.cab.on{z-index:2;border-color:var(--accent)}
 .lbl .n{color:var(--accent)}
 .lbl.full{background:var(--accent);color:var(--accent-ink);border-color:transparent}
 .lbl.full .n{color:inherit}
 .lbl.on{outline:2px solid var(--sel);outline-offset:1px}
 .hint{position:absolute;left:max(12px,env(safe-area-inset-left,0px));bottom:12px;font-size:13px;color:var(--muted);background:var(--surface);
   border:1px solid var(--border);border-radius:6px;padding:5px 9px;pointer-events:none;max-width:calc(100% - 140px)}
-.loading{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-size:15px;pointer-events:none}
 .view-btns{position:absolute;right:12px;bottom:12px;display:flex;gap:6px}
 .view-btns button{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;cursor:pointer}
 
@@ -96,12 +103,14 @@ a{color:var(--accent)}
 .cablist{display:grid;gap:8px}
 .cabrow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg);cursor:pointer;text-align:left;width:100%}
 .cabrow:hover{border-color:var(--accent)}
-.cabrow .num{font:400 22px/1 var(--f-display);width:34px;height:34px;display:grid;place-items:center;border-radius:6px;background:var(--steel);color:var(--text)}
+.cabrow .num{font:400 20px/1 var(--f-display);width:34px;height:34px;display:grid;place-items:center;border-radius:6px;background:var(--body);color:#18201a;border:1px solid var(--body-dark)}
+.cabrow .num.box{background:var(--plastic);color:#f1f1ec;border-color:transparent}
 .cabrow .cnt{font-variant-numeric:tabular-nums;font-size:13px;color:var(--muted)}
 
-.front{display:grid;gap:4px;padding:6px;background:var(--steel);border-radius:6px;border:1px solid var(--steel-dark)}
+.front{display:grid;gap:4px;padding:6px;background:var(--body);border-radius:6px;border:1px solid var(--body-dark)}
+.front.box{background:var(--plastic);border-color:var(--plastic)}
 .front .lv{display:grid;gap:4px}
-.front button{min-height:38px;border:1px solid var(--steel-dark);background:var(--surface);border-radius:4px;cursor:pointer;
+.front button{min-height:38px;border:1px solid var(--body-dark);background:var(--surface);border-radius:4px;cursor:pointer;
   display:flex;align-items:center;justify-content:space-between;gap:6px;padding:4px 7px;font:600 12px/1 var(--f-mono);min-width:0}
 .front button.drawer{background:var(--surface-2)}
 .front button .c{font:500 12px var(--f-body);color:var(--muted);font-variant-numeric:tabular-nums}
@@ -127,7 +136,7 @@ a{color:var(--accent)}
 .btn.sm{padding:4px 9px;font-size:13px;font-weight:500}
 .btn:disabled{opacity:.5;cursor:not-allowed}
 .btns{display:flex;gap:8px;flex-wrap:wrap}
-.msg{font-size:13px;padding:8px 10px;border-radius:6px;background:var(--warn-soft);color:var(--warn)}
+.msg{font-size:13px;padding:8px 10px;border-radius:6px;background:var(--warn-soft);color:var(--warn);display:grid;gap:6px}
 .msg.bad{background:var(--bad-soft);color:var(--bad)}
 .loose{border-top:1px solid var(--border);padding-top:12px;display:grid;gap:8px}
 .foot{margin-top:auto;border-top:1px solid var(--border);padding-top:12px;display:grid;gap:8px}
@@ -157,7 +166,6 @@ a{color:var(--accent)}
   <main class="stage" id="stage">
     <canvas id="scene" aria-label="Modelo 3D dos armários do laboratório"></canvas>
     <div class="labels" id="labels"></div>
-    <div class="loading" id="loading">Carregando armários…</div>
     <div class="hint" id="hint">Arraste para girar · role para aproximar · clique num armário</div>
     <div class="view-btns"><button id="resetView" type="button">Centralizar</button></div>
   </main>
@@ -166,46 +174,51 @@ a{color:var(--accent)}
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="laboratorio.js"></script>
 <script>
 (() => {
 'use strict';
 
 // ---------- planilha ----------
-// O site só lê a planilha. Para cadastrar ou mudar um item, a equipe edita direto no Google Planilhas.
+// Os móveis vêm de laboratorio.js. Da planilha o site só lê o estoque; para cadastrar ou mudar um item, a equipe edita direto no Google Planilhas.
 const PLANILHA_ID = '1M1xmuR2K5_a9YNmupEMKDZzq84BJT-YrPX181cKO5Kw';
 const PLANILHA_URL = 'https://docs.google.com/spreadsheets/d/' + PLANILHA_ID + '/edit';
-const ABAS = { estoque: 'Estoque', armarios: 'Armários', niveis: 'Gavetas e prateleiras' };
+const ABA_ESTOQUE = 'Estoque';
 const ATUALIZA_MS = 60 * 1000;
 
 // ---------- state ----------
 const S = {
-  cabs: [],            // [{id, key, numero, nome, x, z, rot, w, h, d, niveis:[{tipo, div}]}]
+  cabs: [],            // [{id, key, numero, nome, tipo, forma, rodinhas, maleta, x, y, z, rot, w, h, d, niveis:[{tipo, div, tam, nome}]}]
+  bancadas: [],        // [{nome, x, z, rot, w, h, d, escuro}]
   items: [],           // [{id, cab, armario, local, item, espec, qtd, unid, classificacao, categoria, estado, origem, obs, conferido}]
-  loaded: false,
+  loaded: false,       // o estoque já foi lido pelo menos uma vez
   erro: null,          // null | 'privada' | 'rede'
   lidoEm: null,
-  cabsSig: '', itemsSig: '',
+  itemsSig: '',
   view: 'lab',        // 'lab' | 'cab'
   cabId: null,
-  slot: null,          // compartment code inside the open cabinet, e.g. "G1" or "P2B"
+  slot: null,          // compartment code inside the open cabinet, e.g. "G1", "P2B" or "C1A"
 };
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const txt = v => String(v ?? '').trim();
+const num = (v, d) => { if (typeof v === 'number') return v; const n = parseFloat(String(v ?? '').replace(',', '.')); return isFinite(n) ? n : d; };
 const LETTERS = 'ABCDEFGHIJ';
+const LADOS = { 2: ['esquerda', 'direita'], 3: ['esquerda', 'meio', 'direita'] };
 
-// Compartment codes: shelves are P1, P2… and drawers G1, G2… counted top to bottom;
-// a level split into columns adds a letter (P2A, P2B).
+// Compartment codes: shelves are P1, P2…, drawers G1, G2… and box compartments C1, C2…, each type counted
+// top to bottom (back to front in a box); a level split into columns adds a letter (P2A, P2B).
+const PREFIXO = { prateleira: 'P', gaveta: 'G', compartimento: 'C' };
+const NOME_NIVEL = { prateleira: 'Prateleira ', gaveta: 'Gaveta ', compartimento: 'Compartimento ' };
 function slotsOf(cab) {
-  const out = []; let p = 0, g = 0;
+  const out = [], cont = { prateleira: 0, gaveta: 0, compartimento: 0 };
   (cab.niveis || []).forEach((lv, li) => {
-    const n = lv.tipo === 'gaveta' ? ++g : ++p;
-    const pre = (lv.tipo === 'gaveta' ? 'G' : 'P') + n;
-    const div = clamp(lv.div | 0 || 1, 1, 6);
-    for (let c = 0; c < div; c++) out.push({ code: div > 1 ? pre + LETTERS[c] : pre, level: li, col: c, div, tipo: lv.tipo,
-      label: (lv.tipo === 'gaveta' ? 'Gaveta ' : 'Prateleira ') + n + (div > 1 ? ', divisão ' + LETTERS[c] : '') });
+    const n = ++cont[lv.tipo], pre = PREFIXO[lv.tipo] + n, base = lv.nome || NOME_NIVEL[lv.tipo] + n;
+    for (let c = 0; c < lv.div; c++) out.push({ code: lv.div > 1 ? pre + LETTERS[c] : pre, level: li, col: c, div: lv.div, tipo: lv.tipo,
+      label: base + (lv.div > 1 ? ', ' + (LADOS[lv.div] && cab.forma !== 'caixa' ? LADOS[lv.div][c] : 'divisão ' + LETTERS[c]) : '') });
   });
   return out;
 }
@@ -213,19 +226,54 @@ const cabById = id => S.cabs.find(c => c.id === id);
 const itemsIn = (cabId, code) => S.items.filter(i => i.cab === cabId && (code == null || i.local === code));
 const cabName = c => c.nome ? c.id + ' · ' + c.nome : c.id;
 const fullCode = (c, code) => 'A' + c.numero + (code ? '-' + code : '');
+const itensTxt = n => n + (n === 1 ? ' item' : ' itens');
+
+// ---------- móveis (laboratorio.js) ----------
+// "Armário 2", "armario 2", "A2" e "2" apontam para o mesmo móvel
+const chave = s => { const m = /(\d+)/.exec(String(s)); return m ? 'n' + (+m[1]) : norm(s); };
+function tipoNivel(s) { const t = norm(s); return t.startsWith('g') ? 'gaveta' : t.startsWith('c') ? 'compartimento' : 'prateleira'; }
+function montarLab(lab) {
+  const cabs = (lab.armarios || []).filter(a => txt(a.armario)).map(a => {
+    const id = txt(a.armario), m = /(\d+)/.exec(id), t = norm(a.tipo);
+    const forma = /caixa|maleta/.test(t) ? 'caixa' : 'movel';
+    const niveis = (a.niveis || []).map(l => {
+      const tipo = tipoNivel(l.tipo), tam = num(l.tamanho, 0);
+      return { tipo, div: clamp(Math.round(num(l.divisoes, 1)) || 1, 1, 6), tam: tam > 0 ? tam : tipo === 'gaveta' ? 0.6 : 1, nome: txt(l.nome) };
+    });
+    return { id, key: chave(id), numero: m ? String(+m[1]) : id, nome: txt(a.nome), tipo: txt(a.tipo) || 'Armário', forma,
+      rodinhas: /volante|rodinha/.test(t), maleta: t.includes('maleta'),
+      w: clamp(num(a.largura, 0.9), 0.15, 3), h: clamp(num(a.altura, 1.9), 0.08, 3), d: clamp(num(a.fundo, 0.45), 0.1, 1.5),
+      x: num(a.x, 0), z: num(a.z, 0), y: Math.max(0, num(a.altura_do_chao, 0)), rot: num(a.giro, 0),
+      niveis: niveis.length ? niveis : [{ tipo: forma === 'caixa' ? 'compartimento' : 'prateleira', div: 1, tam: 1, nome: '' }] };
+  }).sort((a, b) => (+a.numero || 0) - (+b.numero || 0));
+  const bancadas = (lab.bancadas || []).map(b => ({ nome: txt(b.nome),
+    w: clamp(num(b.comprimento, 2), 0.3, 20), d: clamp(num(b.fundo, 0.7), 0.2, 3), h: clamp(num(b.altura, 0.9), 0.4, 1.5),
+    x: num(b.x, 0), z: num(b.z, 0), rot: num(b.giro, 0), escuro: /pret|escur/.test(norm(b.tampo)) }));
+  // uma caixa embaixo de uma bancada sai para a frente antes de abrir a tampa
+  const pegada = o => (Math.round(o.rot / 90) % 2) ? { w: o.d, d: o.w } : { w: o.w, d: o.d };
+  cabs.forEach(c => {
+    if (c.forma !== 'caixa') return;
+    c.sobBancada = bancadas.some(b => { const p = pegada(b);
+      return Math.abs(c.x - b.x) < p.w / 2 && Math.abs(c.z - b.z) < p.d / 2 && b.h > c.y + c.h && c.y < b.h - 0.1; });
+  });
+  return { cabs, bancadas };
+}
 
 // ---------- 3D ----------
 const canvas = $('#scene');
-let renderer = null, scene, camera, raycaster, pointer;
-const cabGroups = new Map();   // cabId -> {group, doors:[{pivot, side, cur, goal}], slots:Map(code -> {mesh, drawer, tipo, center, goalZ}), body}
+const HAS3D = !!window.THREE;
+let renderer = null, scene, camera, raycaster, pointer, sun;
+const cabGroups = new Map();   // cabId -> {group, doors:[{pivot, axis, open, cur, goal}], slots:Map(code -> {...}), slide, glow}
+let extras = [];               // bancadas, parede e chão: entram no clique para não deixar clicar através delas
 let anim = null;
-const cam = { target: new THREE.Vector3(0, 0.9, 0), theta: 0.5, phi: 1.12, r: 7.5 };
-let camLimits = { rMin: 2.2, rMax: 16, phiMin: 0.25, phiMax: 1.5 };
+const cam = { target: HAS3D ? new THREE.Vector3(0, 0.9, 0) : null, theta: 0.2, phi: 1.25, r: 9 };
+let camLimits = { rMin: 1.5, rMax: 20, phiMin: 0.25, phiMax: 1.5 };
 
 function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
 function col(name) { return new THREE.Color(css(name) || '#888'); }
 
 function init3D() {
+  if (!HAS3D) { $('#hint').textContent = 'O modelo 3D não carregou. Use a lista ao lado.'; return; }
   try {
     renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
   } catch (e) { renderer = null; }
@@ -238,147 +286,220 @@ function init3D() {
   raycaster = new THREE.Raycaster();
   pointer = new THREE.Vector2();
 
-  const hemi = new THREE.HemisphereLight(0xffffff, 0x777777, 0.75); scene.add(hemi);
-  const sun = new THREE.DirectionalLight(0xffffff, 0.75);
-  sun.position.set(4, 8, 6); sun.castShadow = true;
-  sun.shadow.mapSize.set(1024, 1024);
-  Object.assign(sun.shadow.camera, { left: -8, right: 8, top: 8, bottom: -8, near: 1, far: 30 });
-  scene.add(sun);
-  const fill = new THREE.DirectionalLight(0xffffff, 0.25); fill.position.set(-5, 3, 4); scene.add(fill);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x6f746f, 0.55));
+  sun = new THREE.DirectionalLight(0xffffff, 0.6);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  Object.assign(sun.shadow.camera, { left: -7, right: 7, top: 7, bottom: -7, near: 1, far: 30 });
+  scene.add(sun, sun.target);
+  const fill = new THREE.DirectionalLight(0xffffff, 0.22); fill.position.set(-5, 3, 8); scene.add(fill);
 
-  buildFloor();
   bindPointer();
   new ResizeObserver(resize).observe($('#stage'));
   resize();
   requestAnimationFrame(tick);
 }
 
-let floorMesh = null, gridLines = null;
-function buildFloor() {
-  if (floorMesh) { scene.remove(floorMesh); scene.remove(gridLines); }
-  const b = labBounds();
-  const w = b.maxX - b.minX + 3, d = b.maxZ - b.minZ + 3;
+// Footprint of everything in the lab, rotation-agnostic
+function extents() {
+  const all = S.cabs.concat(S.bancadas);
+  if (!all.length) return { minX: -2, maxX: 2, minZ: -1, maxZ: 1 };
+  const b = { minX: Infinity, maxX: -Infinity, minZ: Infinity, maxZ: -Infinity };
+  all.forEach(o => { const r = (Math.round(o.rot / 90) % 2) ? [o.d / 2, o.w / 2] : [o.w / 2, o.d / 2];
+    b.minX = Math.min(b.minX, o.x - r[0]); b.maxX = Math.max(b.maxX, o.x + r[0]); b.minZ = Math.min(b.minZ, o.z - r[1]); b.maxZ = Math.max(b.maxZ, o.z + r[1]); });
+  return b;
+}
+
+function buildRoom() {
+  extras.forEach(o => scene.remove(o)); extras = [];
+  const b = extents();
   const cx = (b.minX + b.maxX) / 2, cz = (b.minZ + b.maxZ) / 2;
-  floorMesh = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshStandardMaterial({ color: col('--floor'), roughness: 1 }));
-  floorMesh.rotation.x = -Math.PI / 2; floorMesh.position.set(cx, 0, cz); floorMesh.receiveShadow = true;
-  scene.add(floorMesh);
+  const w = b.maxX - b.minX + 4, d = b.maxZ - b.minZ + 5;
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshStandardMaterial({ color: col('--floor'), roughness: 1 }));
+  floor.rotation.x = -Math.PI / 2; floor.position.set(cx, 0, b.minZ + d / 2 - 0.5); floor.receiveShadow = true;
+  scene.add(floor); extras.push(floor);
   // 1 m grid, the scale reference
-  const pts = [];
-  const x0 = Math.floor(cx - w / 2), x1 = Math.ceil(cx + w / 2), z0 = Math.floor(cz - d / 2), z1 = Math.ceil(cz + d / 2);
+  const pts = [], x0 = Math.floor(cx - w / 2), x1 = Math.ceil(cx + w / 2), z0 = Math.floor(b.minZ), z1 = Math.ceil(b.minZ + d - 0.5);
   for (let x = x0; x <= x1; x++) pts.push(x, 0.002, z0, x, 0.002, z1);
   for (let z = z0; z <= z1; z++) pts.push(x0, 0.002, z, x1, 0.002, z);
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
-  gridLines = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color: col('--grid') }));
-  scene.add(gridLines);
-}
-function labBounds() {
-  if (!S.cabs.length) return { minX: -2, maxX: 2, minZ: -1, maxZ: 1 };
-  let b = { minX: Infinity, maxX: -Infinity, minZ: Infinity, maxZ: -Infinity };
-  S.cabs.forEach(c => { const r = Math.max(c.w, c.d); b.minX = Math.min(b.minX, c.x - r); b.maxX = Math.max(b.maxX, c.x + r); b.minZ = Math.min(b.minZ, c.z - r); b.maxZ = Math.max(b.maxZ, c.z + r); });
-  return b;
+  const grid = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color: col('--grid') }));
+  scene.add(grid); extras.push(grid);
+  // the wall behind the furniture, visible only from the front, so it vanishes when the camera goes behind it
+  const atWall = S.cabs.concat(S.bancadas).filter(o => !(Math.round(o.rot) % 360));
+  if (atWall.length) {
+    const wz = Math.min(...atWall.map(o => o.z - o.d / 2));
+    const wx0 = Math.min(...atWall.map(o => o.x - o.w / 2)) - 0.5, wx1 = Math.max(...atWall.map(o => o.x + o.w / 2)) + 0.5;
+    const wall = new THREE.Mesh(new THREE.PlaneGeometry(wx1 - wx0, 3), new THREE.MeshStandardMaterial({ color: col('--wall'), roughness: 0.95 }));
+    wall.position.set((wx0 + wx1) / 2, 1.5, wz - 0.002);
+    scene.add(wall); extras.push(wall);
+  }
+  S.bancadas.forEach(bc => { const o = buildBench(bc); scene.add(o); extras.push(o); });
+  sun.position.set(cx + 3, 8, cz + 7); sun.target.position.set(cx, 0, cz);
 }
 
 // Each cabinet gets its own materials, so highlighting one does not tint the others.
 function mats() {
+  const std = (v, o) => new THREE.MeshStandardMaterial(Object.assign({ color: col(v), roughness: 0.7, metalness: 0 }, o));
   return {
-    steel: new THREE.MeshStandardMaterial({ color: col('--steel'), metalness: 0.35, roughness: 0.55 }),
-    inner: new THREE.MeshStandardMaterial({ color: col('--steel-in'), metalness: 0.2, roughness: 0.8 }),
-    shelf: new THREE.MeshStandardMaterial({ color: col('--shelf'), metalness: 0.3, roughness: 0.6 }),
-    dark: new THREE.MeshStandardMaterial({ color: col('--steel-dark'), metalness: 0.5, roughness: 0.4 }),
+    body: std('--body', { roughness: 0.6 }), inner: std('--body-in', { roughness: 0.85 }), shelf: std('--shelf'),
+    metal: std('--body-dark', { metalness: 0.55, roughness: 0.4 }), plastic: std('--plastic', { roughness: 0.5 }), red: std('--handle-red', { roughness: 0.5 }),
   };
 }
-
-function numberTexture(n) {
-  const c = document.createElement('canvas'); c.width = 256; c.height = 256;
-  const x = c.getContext('2d');
-  x.fillStyle = css('--steel'); x.fillRect(0, 0, 256, 256);
-  x.fillStyle = css('--text'); x.globalAlpha = 0.8;
-  x.font = '400 150px "Nova Round", Barlow, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
-  x.fillText(String(n), 128, 140);
-  const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t;
-}
+const hitMat = () => new THREE.MeshBasicMaterial({ color: col('--hl'), transparent: true, opacity: 0, depthWrite: false });
 
 function box(w, h, d, m) { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.castShadow = true; o.receiveShadow = true; return o; }
 
+function buildBench(b) {
+  const g = new THREE.Group();
+  g.position.set(b.x, 0, b.z); g.rotation.y = b.rot * Math.PI / 180;
+  const top = box(b.w, 0.03, b.d, new THREE.MeshStandardMaterial({ color: col(b.escuro ? '--bench-dark' : '--bench-light'), roughness: b.escuro ? 0.9 : 0.6 }));
+  top.position.set(0, b.h - 0.015, 0); g.add(top);
+  // legs at both ends; where a cabinet sits at the end they end up hidden inside it
+  const metal = new THREE.MeshStandardMaterial({ color: col('--body-dark'), metalness: 0.55, roughness: 0.4 });
+  [-1, 1].forEach(s => [-b.d / 2 + 0.06, b.d / 2 - 0.15].forEach(z => {
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, b.h - 0.03, 10), metal);
+    leg.position.set(s * (b.w / 2 - 0.04), (b.h - 0.03) / 2, z); g.add(leg);
+  }));
+  return g;
+}
+
 function buildCabinet(c, M) {
   const g = new THREE.Group();
-  g.position.set(c.x, 0, c.z);
+  g.position.set(c.x, c.y, c.z);
   g.rotation.y = (c.rot || 0) * Math.PI / 180;
-  const { w, h, d } = c, t = 0.02, base = 0.08;
-  const body = [];
-  const add = (o, x, y, z) => { o.position.set(x, y, z); g.add(o); body.push(o); o.userData.cabId = c.id; return o; };
-  add(box(w, h - base, t, M.inner), 0, base + (h - base) / 2, -d / 2 + t / 2);       // back
-  add(box(t, h - base, d, M.steel), -w / 2 + t / 2, base + (h - base) / 2, 0);        // left
-  add(box(t, h - base, d, M.steel), w / 2 - t / 2, base + (h - base) / 2, 0);         // right
-  add(box(w, t, d, M.steel), 0, h - t / 2, 0);                                      // top
-  add(box(w, t, d, M.shelf), 0, base + t / 2, 0);                                   // bottom
-  add(box(w - 0.02, base, d - 0.04, M.dark), 0, base / 2, 0);                        // plinth
+  const parts = c.forma === 'caixa' ? buildBox(c, M, g) : buildFurniture(c, M, g);
+  const glow = [];
+  g.traverse(o => { if (!o.isMesh) return; if (!o.userData.cabId) o.userData.cabId = c.id; if (o.material.emissive) glow.push(o.material); });
+  scene.add(g);
+  return Object.assign({ group: g, glow: [...new Set(glow)] }, parts);
+}
 
-  // Interior: levels share the inner height in proportion to their type (drawers are shorter)
+// Armário, armário de parede e gaveteiro: caixa de laminado com portas na frente das prateleiras
+function buildFurniture(c, M, g) {
+  const { w, h, d } = c, t = 0.018;
+  const base = c.y > 0 ? 0 : c.rodinhas ? 0.06 : 0.12;     // nada na parede, rodinhas no volante, pés de metal no chão
+  const add = (o, x, y, z) => { o.position.set(x, y, z); g.add(o); return o; };
+  const bh = h - base, by = base + bh / 2;
+  add(box(w, bh, t, M.inner), 0, by, -d / 2 + t / 2);       // back
+  add(box(t, bh, d, M.body), -w / 2 + t / 2, by, 0);        // left
+  add(box(t, bh, d, M.body), w / 2 - t / 2, by, 0);         // right
+  add(box(w, t, d, M.body), 0, h - t / 2, 0);               // top
+  add(box(w, t, d, M.body), 0, base + t / 2, 0);            // bottom
+  if (base) {
+    const ix = w / 2 - 0.05, iz = d / 2 - 0.06;
+    [[-ix, -iz], [ix, -iz], [-ix, iz], [ix, iz]].forEach(([x, z]) => {
+      const foot = c.rodinhas
+        ? new THREE.Mesh(new THREE.CylinderGeometry(base / 2, base / 2, 0.025, 14).rotateZ(Math.PI / 2), M.plastic)
+        : new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, base, 10), M.metal);
+      add(foot, x, base / 2, z);
+    });
+  }
+
+  // Interior: levels share the inner height by their size
+  const lv = c.niveis;
+  const temPortas = lv.some(l => l.tipo !== 'gaveta');
   const innerTop = h - t, innerBot = base + t, innerW = w - 2 * t;
-  const lv = c.niveis || [];
-  const weights = lv.map(l => l.tipo === 'gaveta' ? 0.6 : 1);
-  const sumW = weights.reduce((a, b) => a + b, 0) || 1;
-  const slots = new Map();
+  const sum = lv.reduce((a, l) => a + l.tam, 0) || 1;
+  const frontZ = temPortas ? d / 2 - 0.035 : d / 2 + 0.01;  // drawer fronts sit behind the doors, or flush in a drawer unit
+  const slots = new Map(), codes = slotsOf(c);
   let y = innerTop;
-  const codes = slotsOf(c);
   lv.forEach((l, li) => {
-    const lh = (innerTop - innerBot) * weights[li] / sumW;
+    const lh = (innerTop - innerBot) * l.tam / sum;
     const y0 = y - lh; y = y0;
-    if (li < lv.length - 1 || l.tipo !== 'gaveta') add(box(innerW, 0.015, d - 0.04, M.shelf), 0, y0 + 0.0075, 0.0);
-    const div = clamp(l.div | 0 || 1, 1, 6);
-    const cw = innerW / div;
-    for (let k = 1; k < div; k++) add(box(0.012, lh - 0.015, d - 0.06, M.shelf), -innerW / 2 + k * cw, y0 + lh / 2, 0);
+    if (li < lv.length - 1) add(box(innerW, 0.015, d - 0.04, M.shelf), 0, y0 + 0.0075, 0);
+    const cw = innerW / l.div;
+    if (l.tipo !== 'gaveta') for (let k = 1; k < l.div; k++) add(box(0.016, lh - 0.015, d - 0.06, M.shelf), -innerW / 2 + k * cw, y0 + lh / 2, 0);
     codes.filter(s => s.level === li).forEach(s => {
-      const cx = -innerW / 2 + cw * (s.col + 0.5);
-      let mesh, drawer = null;
+      const cx = -innerW / 2 + cw * (s.col + 0.5), cy = y0 + lh / 2;
+      let mesh, drawer = null, lbl;
       if (l.tipo === 'gaveta') {
         drawer = new THREE.Group();
-        const fw = cw - 0.014, fh = lh - 0.016;
-        const front = box(fw, fh, 0.02, new THREE.MeshStandardMaterial({ color: col('--steel'), metalness: 0.35, roughness: 0.5 }));
-        front.position.set(0, 0, d / 2 - 0.035);
-        const tray = box(fw - 0.02, fh * 0.7, d - 0.1, M.inner); tray.position.set(0, -fh * 0.12, -0.02);
-        const handle = box(Math.min(0.14, fw * 0.4), 0.018, 0.025, M.dark); handle.position.set(0, fh * 0.15, d / 2 - 0.012);
-        drawer.add(front, tray, handle);
-        drawer.position.set(cx, y0 + lh / 2 + 0.004, 0);
+        const fw = cw - 0.006, fh = lh - 0.008, trayD = d - 0.1;
+        const front = box(fw, fh, 0.02, new THREE.MeshStandardMaterial({ color: col('--body'), roughness: 0.6 }));
+        front.position.set(0, 0, frontZ);
+        const tray = box(fw - 0.03, fh * 0.7, trayD, M.inner); tray.position.set(0, -fh * 0.12, frontZ - 0.012 - trayD / 2);
+        const pull = box(fw, 0.022, 0.014, M.metal); pull.position.set(0, fh / 2 - 0.016, frontZ + 0.016);   // aluminium strip along the top
+        drawer.add(front, tray, pull);
+        [front, tray, pull].forEach(o => { o.userData = { cabId: c.id, slot: s.code }; });
+        drawer.position.set(cx, cy, 0);
         g.add(drawer);
         mesh = front;
-        [front, tray, handle].forEach(o => { o.userData = { cabId: c.id, slot: s.code }; });
+        lbl = new THREE.Vector3(cx, cy, frontZ + 0.03);
       } else {
         // invisible hit volume filling the shelf bay, tinted when hovered or selected
-        mesh = new THREE.Mesh(new THREE.BoxGeometry(cw - 0.03, lh - 0.03, d - 0.08),
-          new THREE.MeshBasicMaterial({ color: col('--hl'), transparent: true, opacity: 0, depthWrite: false }));
-        mesh.position.set(cx, y0 + lh / 2 + 0.008, 0.01);
+        mesh = new THREE.Mesh(new THREE.BoxGeometry(cw - 0.03, lh - 0.03, d - 0.08), hitMat());
+        mesh.position.set(cx, cy + 0.008, 0.01);
         mesh.userData = { cabId: c.id, slot: s.code };
         g.add(mesh);
+        lbl = new THREE.Vector3(cx, cy, d / 2 - 0.05);
       }
-      slots.set(s.code, { mesh, drawer, tipo: l.tipo, center: new THREE.Vector3(cx, y0 + lh / 2, d / 2), goalZ: 0 });
+      slots.set(s.code, { mesh, drawer, tipo: l.tipo, lbl, goalZ: 0, pull: d * 0.55 });
     });
   });
 
-  // Doors: two leaves hinged on the outer edges, numbered like the real cabinet
+  // Doors in front of the shelves: two leaves hinged on the outer edges, or one on narrow cabinets
   const doors = [];
-  const tex = numberTexture(c.numero);
-  [-1, 1].forEach(side => {
-    const pivot = new THREE.Group();
-    pivot.position.set(side * w / 2, base + (h - base) / 2, d / 2 + 0.012);
-    const leafW = w / 2 - 0.004;
-    const leaf = box(leafW, h - base - 0.01, 0.02, M.steel);
-    leaf.position.set(-side * leafW / 2, 0, 0);
-    leaf.userData.cabId = c.id;
-    const handle = box(0.02, 0.18, 0.03, M.dark); handle.position.set(-side * (leafW - 0.05), 0, 0.02); handle.userData.cabId = c.id;
-    pivot.add(leaf, handle);
-    if (side === 1) {
-      const plate = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.22), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.7 }));
-      plate.position.set(-leafW / 2, (h - base) * 0.28, 0.011); plate.userData.cabId = c.id;
-      pivot.add(plate);
-    }
-    g.add(pivot);
-    doors.push({ pivot, side, cur: 0, goal: 0 });
-  });
+  if (temPortas) {
+    const n = w >= 0.55 ? 2 : 1, leafW = w / n - 0.004, leafH = h - base - 0.01;
+    (n === 2 ? [-1, 1] : [-1]).forEach((side, i) => {
+      const pivot = new THREE.Group();
+      pivot.position.set(side * w / 2, base + (h - base) / 2, d / 2 + 0.012);
+      const leaf = box(leafW, leafH, 0.02, M.body); leaf.position.set(-side * leafW / 2, 0, 0);
+      // aluminium pull: full-height strip on the meeting edge of wall cabinets, a strip along the top on the lower ones
+      const pull = c.y > 0 ? box(0.03, leafH, 0.016, M.metal) : box(leafW, 0.022, 0.016, M.metal);
+      if (c.y > 0) pull.position.set(-side * (leafW - 0.015), 0, 0.018); else pull.position.set(-side * leafW / 2, leafH / 2 - 0.016, 0.018);
+      pivot.add(leaf, pull);
+      if (i === n - 1) {
+        const lock = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.009, 0.012, 12).rotateX(Math.PI / 2), M.metal);
+        lock.position.set(-side * (leafW - (c.y > 0 ? 0.06 : 0.04)), c.y > 0 ? -leafH / 2 + 0.07 : leafH / 2 - 0.07, 0.014);
+        pivot.add(lock);
+      }
+      g.add(pivot);
+      doors.push({ pivot, axis: 'y', open: side * 1.62, cur: 0, goal: 0 });   // a bit past 90°, so they clear the neighbours
+    });
+  }
+  return { doors, slots, slide: null };
+}
 
-  scene.add(g);
-  return { group: g, doors, slots, body };
+// Caixa e maleta: base de plástico com tampa; os compartimentos ficam em fileiras, do fundo para a frente
+function buildBox(c, M, g) {
+  const { w, h, d } = c, t = 0.012;
+  const inner = new THREE.Group(); g.add(inner);   // slides out from under a bench before the lid opens
+  const add = (o, x, y, z) => { o.position.set(x, y, z); inner.add(o); return o; };
+  const lidH = c.maleta ? Math.min(0.05, h * 0.3) : 0.035, bh = h - lidH;
+  add(box(w, t, d, M.plastic), 0, t / 2, 0);
+  add(box(w, bh, t, M.plastic), 0, bh / 2, -d / 2 + t / 2);
+  add(box(w, bh, t, M.plastic), 0, bh / 2, d / 2 - t / 2);
+  add(box(t, bh, d, M.plastic), -w / 2 + t / 2, bh / 2, 0);
+  add(box(t, bh, d, M.plastic), w / 2 - t / 2, bh / 2, 0);
+  if (c.maleta) add(box(Math.min(0.13, w * 0.3), 0.022, 0.03, M.metal), 0, bh - 0.025, d / 2 + 0.015);   // carrying handle
+  else add(box(Math.min(0.16, w * 0.35), 0.03, 0.035, M.red), 0, bh - 0.06, d / 2 + 0.017);              // red handle
+
+  const pivot = new THREE.Group(); pivot.position.set(0, bh, -d / 2); inner.add(pivot);
+  const lid = box(w + 0.008, lidH, d + 0.008, M.plastic); lid.position.set(0, lidH / 2, d / 2); pivot.add(lid);
+  const doors = [{ pivot, axis: 'x', open: c.maleta ? -1.75 : -1.9, cur: 0, goal: 0 }];
+
+  const lv = c.niveis, innerW = w - 2 * t, innerD = d - 2 * t, innerH = bh - t;
+  const sum = lv.reduce((a, l) => a + l.tam, 0) || 1;
+  const slots = new Map(), codes = slotsOf(c);
+  let z = -innerD / 2;
+  lv.forEach((l, li) => {
+    const rd = innerD * l.tam / sum, z0 = z; z += rd;
+    if (li > 0) add(box(innerW, innerH * 0.8, 0.006, M.plastic), 0, t + innerH * 0.4, z0);
+    const cw = innerW / l.div;
+    for (let k = 1; k < l.div; k++) add(box(0.006, innerH * 0.8, rd, M.plastic), -innerW / 2 + k * cw, t + innerH * 0.4, z0 + rd / 2);
+    codes.filter(s => s.level === li).forEach(s => {
+      const cx = -innerW / 2 + cw * (s.col + 0.5), cz = z0 + rd / 2;
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(cw - 0.012, innerH * 0.9, rd - 0.012), hitMat());
+      mesh.position.set(cx, t + innerH * 0.45, cz);
+      mesh.userData = { cabId: c.id, slot: s.code };
+      inner.add(mesh);
+      slots.set(s.code, { mesh, drawer: null, tipo: s.tipo, lbl: new THREE.Vector3(cx, bh + 0.03, cz) });
+    });
+  });
+  const slide = c.sobBancada ? { obj: inner, dist: d + 0.12, cur: 0, goal: 0 } : null;
+  return { doors, slots, slide };
 }
 
 function rebuildScene() {
@@ -386,7 +507,7 @@ function rebuildScene() {
   cabGroups.forEach(v => scene.remove(v.group));
   cabGroups.clear();
   S.cabs.forEach(c => cabGroups.set(c.id, buildCabinet(c, mats())));
-  buildFloor();
+  buildRoom();
   applyOpenState(true);
   paintSlots();
 }
@@ -394,8 +515,9 @@ function rebuildScene() {
 function applyOpenState(instant) {
   cabGroups.forEach((v, id) => {
     const open = S.view === 'cab' && S.cabId === id;
-    v.doors.forEach(dr => { dr.goal = open ? dr.side * 1.95 : 0; if (instant || REDUCED) dr.cur = dr.goal; });
-    v.slots.forEach((s, code) => { if (s.drawer) { s.goalZ = (open && S.slot === code) ? (cabById(id).d * 0.55) : 0; if (instant || REDUCED) s.drawer.position.z = s.goalZ; } });
+    v.doors.forEach(dr => { dr.goal = open ? dr.open : 0; if (instant || REDUCED) { dr.cur = dr.goal; dr.pivot.rotation[dr.axis] = dr.cur; } });
+    v.slots.forEach((s, code) => { if (s.drawer) { s.goalZ = (open && S.slot === code) ? s.pull : 0; if (instant || REDUCED) s.drawer.position.z = s.goalZ; } });
+    if (v.slide) { v.slide.goal = open ? v.slide.dist : 0; if (instant || REDUCED) { v.slide.cur = v.slide.goal; v.slide.obj.position.z = v.slide.cur; } }
   });
 }
 
@@ -406,16 +528,14 @@ function paintSlots() {
     v.slots.forEach((s, code) => {
       const on = isOpen && S.slot === code, hov = hovered && hovered.cabId === id && hovered.slot === code && isOpen;
       if (s.drawer) {
-        s.mesh.material.color.copy(on ? col('--sel') : hov ? col('--hl') : col('--steel'));
+        s.mesh.material.color.copy(on ? col('--sel') : hov ? col('--hl') : col('--body'));
       } else {
         s.mesh.material.color.copy(on ? col('--sel') : col('--hl'));
-        s.mesh.material.opacity = on ? 0.38 : hov ? 0.22 : 0;
+        s.mesh.material.opacity = on ? 0.4 : hov ? 0.24 : 0;
       }
     });
     const hl = S.view === 'lab' && hovered && hovered.cabId === id;
-    v.body.concat(v.doors.flatMap(d => d.pivot.children)).forEach(o => {
-      if (o.material && o.material.emissive) { o.material.emissive.set(hl ? css('--hl') : '#000000'); o.material.emissiveIntensity = hl ? 0.18 : 0; }
-    });
+    v.glow.forEach(m => { m.emissive.set(hl ? css('--hl') : '#000000'); m.emissiveIntensity = hl ? 0.2 : 0; });
   });
 }
 
@@ -429,19 +549,26 @@ function resize() {
 
 // Camera framing
 function goalForLab() {
-  const b = labBounds();
+  const b = extents();
   const cx = (b.minX + b.maxX) / 2, cz = (b.minZ + b.maxZ) / 2;
-  const span = Math.max(b.maxX - b.minX, b.maxZ - b.minZ, 3);
-  const fit = span / (2 * Math.tan((camera ? camera.fov : 40) * Math.PI / 360)) / Math.min(1, camera ? camera.aspect : 1);
-  return { target: new THREE.Vector3(cx, 0.8, cz), theta: 0.45, phi: 1.1, r: Math.min(18, fit * 1.05 + 2) };
+  const tn = Math.tan((camera ? camera.fov : 40) * Math.PI / 360), aspect = camera ? camera.aspect : 1.5;
+  const needH = ((b.maxX - b.minX) / 2 + 0.5) / (tn * aspect), needV = 1.7 / tn;
+  return { target: new THREE.Vector3(cx, 1.2, cz), theta: 0.08, phi: 1.34, r: clamp(Math.max(needH, needV) + (b.maxZ - b.minZ) / 2, 3, 20) };
 }
 function goalForCab(c) {
   const rot = (c.rot || 0) * Math.PI / 180;
-  const fov = (camera ? camera.fov : 40) * Math.PI / 180;
-  const aspect = camera ? camera.aspect : 1;
-  const needV = (c.h + 0.35) / (2 * Math.tan(fov / 2));
-  const needH = (c.w * 1.9 + 0.3) / (2 * Math.tan(fov / 2) * aspect); // doors swing out to both sides
-  return { target: new THREE.Vector3(c.x, c.h / 2, c.z), theta: rot + 0.12, phi: 1.43, r: Math.max(needV, needH) + c.d / 2 };
+  const tn = Math.tan((camera ? camera.fov : 40) * Math.PI / 360), aspect = camera ? camera.aspect : 1.5;
+  const v = cabGroups.get(c.id), out = v && v.slide ? v.slide.dist : 0;
+  const target = new THREE.Vector3(c.x + Math.sin(rot) * out, 0, c.z + Math.cos(rot) * out);
+  if (c.forma === 'caixa') {
+    target.y = c.y + c.h * 0.6;
+    const r = Math.max((c.w + 0.3) / (2 * tn * aspect), (c.d + c.h + 0.35) / (2 * tn)) + 0.15;
+    return { target, theta: rot + 0.1, phi: 0.85, r };
+  }
+  target.y = c.y + c.h / 2;
+  const doorsOut = c.niveis.some(l => l.tipo !== 'gaveta') ? 0.55 : 0.2;
+  const needV = (c.h + 0.3) / (2 * tn), needH = (c.w + 0.3) / (2 * tn * aspect);
+  return { target, theta: rot + 0.12, phi: c.y > 0 ? 1.5 : 1.43, r: Math.max(needV, needH) + c.d / 2 + doorsOut };
 }
 function flyTo(goal) {
   const from = { target: cam.target.clone(), theta: cam.theta, phi: cam.phi, r: cam.r };
@@ -466,7 +593,14 @@ function tick(now) {
     if (k >= 1) anim = null;
   }
   cabGroups.forEach(v => {
-    v.doors.forEach(dr => { dr.cur += (dr.goal - dr.cur) * 0.14; dr.pivot.rotation.y = dr.cur; });
+    // a box under a bench slides out first and only then opens its lid; closing goes the other way
+    const slid = !v.slide || Math.abs(v.slide.cur - v.slide.goal) < 0.02 || v.slide.goal === 0;
+    v.doors.forEach(dr => { const g = slid ? dr.goal : 0; dr.cur += (g - dr.cur) * 0.14; dr.pivot.rotation[dr.axis] = dr.cur; });
+    if (v.slide) {
+      const lidShut = v.doors.every(dr => Math.abs(dr.cur) < 0.05);
+      if (v.slide.goal > 0 || lidShut) v.slide.cur += (v.slide.goal - v.slide.cur) * 0.14;
+      v.slide.obj.position.z = v.slide.cur;
+    }
     v.slots.forEach(s => { if (s.drawer) s.drawer.position.z += ((s.goalZ || 0) - s.drawer.position.z) * 0.16; });
   });
   updateCamera();
@@ -515,14 +649,16 @@ function hit(e) {
   raycaster.setFromCamera(pointer, camera);
   const objs = [];
   cabGroups.forEach(v => v.group.traverse(o => { if (o.isMesh) objs.push(o); }));
+  extras.forEach(x => x.traverse(o => { if (o.isMesh) objs.push(o); }));
   const hits = raycaster.intersectObjects(objs, false);
   if (S.view === 'cab') {
-    // inside an open cabinet, prefer compartments over the body panels behind them
+    // inside an open cabinet, prefer compartments over the panels and benches in front of them
     const s = hits.find(h => h.object.userData.slot && h.object.userData.cabId === S.cabId);
     if (s) return s.object.userData;
   }
-  const h = hits.find(h => h.object.userData.cabId);
-  return h ? { cabId: h.object.userData.cabId, slot: null } : null;
+  // otherwise the first thing hit decides, so a bench top does not open the cabinet under it
+  const h = hits[0];
+  return h && h.object.userData.cabId ? { cabId: h.object.userData.cabId, slot: null } : null;
 }
 function hoverAt(e) {
   if (!renderer) return;
@@ -539,7 +675,7 @@ function pickAt(e) {
   else if (h.slot) openSlot(h.slot);
 }
 
-// Floating labels: cabinet names in the lab view, compartment codes and counts inside a cabinet
+// Floating labels: cabinet numbers in the lab view, compartment codes and counts inside a cabinet
 const labelEls = new Map();
 function placeLabels() {
   const host = $('#labels');
@@ -547,16 +683,21 @@ function placeLabels() {
   const want = new Map();
   if (S.view === 'lab') {
     S.cabs.forEach(c => {
-      const n = itemsIn(c.id).length;
-      want.set('c' + c.id, { cls: 'lbl cab', html: esc(c.id) + '<small>' + (c.nome ? esc(c.nome) + ' · ' : '') + n + (n === 1 ? ' item' : ' itens') + '</small>', pos: new THREE.Vector3(c.x, c.h + 0.22, c.z) });
+      const v = cabGroups.get(c.id); if (!v) return;
+      const n = itemsIn(c.id).length, hov = hovered && hovered.cabId === c.id;
+      const base = c.forma === 'caixa' || c.y > 0 || c.rodinhas ? 0 : 0.12;
+      const p = c.forma === 'caixa' ? new THREE.Vector3(0, c.h + 0.1, 0) : new THREE.Vector3(0, base + (c.h - base) * 0.55, c.d / 2 + 0.04);
+      v.group.localToWorld(p);
+      want.set('c' + c.id, { cls: 'lbl cab' + (hov ? ' on' : ''), pos: p,
+        html: esc(hov ? cabName(c) : c.numero) + (S.loaded && (n || hov) ? '<small>' + itensTxt(n) + '</small>' : '') });
     });
   } else {
     const c = cabById(S.cabId), v = cabGroups.get(S.cabId);
     if (c && v) v.slots.forEach((s, code) => {
       const n = itemsIn(c.id, code).length;
-      const p = s.center.clone(); if (s.drawer) p.z = s.drawer.position.z + c.d / 2 + 0.02; else p.z = c.d / 2 - 0.05;
-      p.y += s.drawer ? -0.035 : 0;
-      v.group.localToWorld(p);
+      // drawer labels follow the drawer out; box labels live in the part that slides out from under the bench
+      const p = s.lbl.clone(); if (s.drawer) p.z += s.drawer.position.z;
+      (s.drawer ? v.group : s.mesh.parent).localToWorld(p);
       want.set('s' + code, { cls: 'lbl' + (n ? ' full' : '') + (S.slot === code ? ' on' : ''), html: esc(code) + (n ? ' · <span class="n">' + n + '</span>' : ''), pos: p });
     });
   }
@@ -580,20 +721,21 @@ function setHash() {
   const h = c ? '#' + fullCode(c, S.slot) : '';
   if (location.hash !== h) history.replaceState(null, '', h || location.pathname + location.search);
 }
+const HINT_LAB = 'Arraste para girar · role para aproximar · clique num armário';
 function openLab() {
   S.view = 'lab'; S.cabId = null; S.slot = null;
-  camLimits = { rMin: 2.2, rMax: 20, phiMin: 0.25, phiMax: 1.5 };
+  camLimits = { rMin: 1.5, rMax: 20, phiMin: 0.25, phiMax: 1.5 };
   if (camera) flyTo(goalForLab());
   applyOpenState(); paintSlots(); renderSheet(); renderCrumbs(); setHash();
-  $('#hint').textContent = 'Arraste para girar · role para aproximar · clique num armário';
+  $('#hint').textContent = HINT_LAB;
 }
 function openCab(id, slot) {
   const c = cabById(id); if (!c) return;
   S.view = 'cab'; S.cabId = id; S.slot = slot || null;
-  camLimits = { rMin: 0.8, rMax: 8, phiMin: 0.6, phiMax: 1.62 };
+  camLimits = { rMin: 0.4, rMax: 8, phiMin: 0.3, phiMax: 1.62 };
   if (camera) flyTo(goalForCab(c));
   applyOpenState(); paintSlots(); renderSheet(); renderCrumbs(); setHash();
-  $('#hint').textContent = 'Clique numa gaveta ou prateleira para ver o que tem nela';
+  $('#hint').textContent = c.forma === 'caixa' ? 'Clique num compartimento para ver o que tem nele' : 'Clique numa gaveta ou prateleira para ver o que tem nela';
 }
 function openSlot(code) {
   S.slot = S.slot === code ? null : code;
@@ -633,8 +775,8 @@ function itemCard(i) {
 
 function frontGrid(c) {
   const sl = slotsOf(c);
-  return '<div class="front" role="group" aria-label="Frente do ' + esc(c.id) + '">' +
-    (c.niveis || []).map((lv, li) => {
+  return '<div class="front' + (c.forma === 'caixa' ? ' box' : '') + '" role="group" aria-label="Compartimentos do ' + esc(c.id) + '">' +
+    c.niveis.map((lv, li) => {
       const row = sl.filter(s => s.level === li);
       return '<div class="lv" style="grid-template-columns:repeat(' + row.length + ',minmax(0,1fr))">' + row.map(s => {
         const n = itemsIn(c.id, s.code).length;
@@ -644,9 +786,17 @@ function frontGrid(c) {
     }).join('') + '</div>';
 }
 
+// Aviso de quando o estoque ainda não foi lido. Os móveis aparecem de qualquer jeito, porque vêm do site.
+function avisoEstoque() {
+  if (S.loaded) return '';
+  if (!S.erro) return '<p class="small muted">Lendo o estoque na planilha…</p>';
+  if (S.erro === 'privada') return '<div class="msg bad"><b>Não consegui ler o estoque.</b><span>A planilha precisa estar aberta para leitura. Quem é dona dela faz assim:</span>' +
+    '<ol class="steps"><li>Abra a planilha e clique em <b>Compartilhar</b>.</li><li>Em <b>Acesso geral</b>, escolha <b>Qualquer pessoa com o link</b>.</li><li>Deixe como <b>Leitor</b> e clique em <b>Concluído</b>.</li></ol></div>';
+  return '<div class="msg bad"><b>Não consegui ler o estoque.</b><span>Confira a internet e clique em Atualizar.</span></div>';
+}
 const hora = d => String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
 function foot() {
-  const quando = S.lidoEm ? 'Lido da planilha às ' + hora(S.lidoEm) + '. Atualiza sozinho a cada minuto.' : '';
+  const quando = S.lidoEm ? 'Estoque lido da planilha às ' + hora(S.lidoEm) + '. Atualiza sozinho a cada minuto.' : '';
   return '<div class="foot">' +
     (S.erro && S.loaded ? '<div class="msg">Não consegui atualizar agora. Mostrando o que foi lido às ' + hora(S.lidoEm) + '.</div>' : '') +
     (quando ? '<p class="small muted">' + quando + '</p>' : '') +
@@ -656,31 +806,21 @@ function foot() {
 
 function renderSheet() {
   const el = $('#sheet');
-  if (!S.loaded) {
-    if (!S.erro) { el.innerHTML = '<h2>Laboratório</h2><p class="muted">Lendo a planilha do estoque…</p>'; return; }
-    el.innerHTML = '<h2>Não consegui ler a planilha</h2>' +
-      (S.erro === 'privada'
-        ? '<p class="muted">A planilha do estoque precisa estar aberta para leitura. Quem é dona dela faz assim:</p>' +
-          '<ol class="steps small"><li>Abra a planilha e clique em <b>Compartilhar</b>.</li><li>Em <b>Acesso geral</b>, escolha <b>Qualquer pessoa com o link</b>.</li><li>Deixe como <b>Leitor</b> e clique em <b>Concluído</b>.</li></ol>'
-        : '<p class="muted">Confira a internet e tente de novo.</p>') +
-      '<div class="btns"><button class="btn pri" type="button" data-act="reload">Tentar de novo</button><a class="btn" href="' + PLANILHA_URL + '" target="_blank" rel="noopener">Abrir a planilha ↗</a></div>';
-    return;
-  }
-
   if (S.view === 'lab') {
     if (!S.cabs.length) {
-      el.innerHTML = '<h2>Nenhum armário cadastrado</h2><p class="muted">Preencha a aba Armários da planilha para eles aparecerem no modelo.</p>' + foot();
+      el.innerHTML = '<h2>Nenhum armário cadastrado</h2><p class="muted">Os móveis do modelo ficam no arquivo laboratorio.js do site.</p>' + foot();
       return;
     }
     const total = S.items.length;
     const semCab = S.items.filter(i => !i.cab);
-    el.innerHTML = '<div><h2>Laboratório</h2><p class="muted small">' + S.cabs.length + ' armários · ' + total + (total === 1 ? ' item cadastrado' : ' itens cadastrados') + '</p></div>' +
+    el.innerHTML = '<div><h2>Laboratório</h2><p class="muted small">' + S.cabs.length + ' móveis' + (S.loaded ? ' · ' + total + (total === 1 ? ' item cadastrado' : ' itens cadastrados') : '') + '</p></div>' +
+      avisoEstoque() +
       '<div class="cablist">' + S.cabs.map(c => {
         const n = itemsIn(c.id).length;
-        return '<button class="cabrow" type="button" data-cab="' + esc(c.id) + '"><span class="num">' + esc(c.numero) + '</span><span><b>' + esc(cabName(c)) + '</b><br><span class="small muted">' + slotsOf(c).length + ' compartimentos</span></span><span class="cnt">' + n + (n === 1 ? ' item' : ' itens') + '</span></button>';
+        return '<button class="cabrow" type="button" data-cab="' + esc(c.id) + '"><span class="num' + (c.forma === 'caixa' ? ' box' : '') + '">' + esc(c.numero) + '</span><span><b>' + esc(cabName(c)) + '</b><br><span class="small muted">' + esc(c.tipo) + ' · ' + slotsOf(c).length + ' compartimentos</span></span><span class="cnt">' + (S.loaded ? itensTxt(n) : '') + '</span></button>';
       }).join('') + '</div>' +
       '<p class="small muted">Clique num armário, no modelo ou na lista, para abrir as portas.</p>' +
-      (semCab.length ? '<div class="loose"><h3>Sem armário no modelo</h3><p class="small muted">A coluna Armário destes itens não bate com nenhum armário da aba Armários.</p><ul class="items">' + semCab.map(itemCard).join('') + '</ul></div>' : '') +
+      (semCab.length ? '<div class="loose"><h3>Sem armário no modelo</h3><p class="small muted">A coluna Armário destes itens não bate com nenhum móvel do modelo.</p><ul class="items">' + semCab.map(itemCard).join('') + '</ul></div>' : '') +
       foot();
     return;
   }
@@ -690,21 +830,23 @@ function renderSheet() {
   const sl = slotsOf(c);
   const codes = new Set(sl.map(s => s.code));
   const loose = itemsIn(c.id).filter(i => !codes.has(i.local));
-  let html = '<div><h2>' + esc(cabName(c)) + '</h2><p class="small muted">' + sl.length + ' compartimentos · ' + itemsIn(c.id).length + ' itens</p></div>';
-  html += '<div><h3 style="margin-bottom:8px">Frente do armário</h3>' + frontGrid(c) + '</div>';
+  let html = '<div><h2>' + esc(cabName(c)) + '</h2><p class="small muted">' + esc(c.tipo) + ' · ' + sl.length + ' compartimentos' + (S.loaded ? ' · ' + itensTxt(itemsIn(c.id).length) : '') + '</p></div>';
+  html += avisoEstoque();
+  html += '<div><h3 style="margin-bottom:8px">' + (c.forma === 'caixa' ? 'Vista de cima, do fundo para a frente' : 'Frente do móvel') + '</h3>' + frontGrid(c) + '</div>';
 
   if (S.slot) {
     const s = sl.find(x => x.code === S.slot);
     const list = itemsIn(c.id, S.slot).sort((a, b) => String(a.item).localeCompare(String(b.item), 'pt'));
     html += '<div style="display:grid;gap:10px"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span class="code">' + esc(fullCode(c, S.slot)) + '</span><b>' + esc(s ? s.label : S.slot) + '</b></div>';
-    if (!list.length) html += '<div class="empty"><span>Nada cadastrado aqui ainda.</span><span class="small">Para cadastrar, escreva na aba Estoque da planilha: Armário <b>' + esc(c.id) + '</b> e Local no armário <b>' + esc(S.slot) + '</b>.</span></div>';
+    if (!S.loaded) html += '<div class="empty"><span>Ainda não consegui ler o estoque, então não sei o que tem aqui.</span></div>';
+    else if (!list.length) html += '<div class="empty"><span>Nada cadastrado aqui ainda.</span><span class="small">Para cadastrar, escreva na aba Estoque da planilha: Armário <b>' + esc(c.id) + '</b> e Local no armário <b>' + esc(S.slot) + '</b>.</span></div>';
     else html += '<ul class="items">' + list.map(itemCard).join('') + '</ul>';
     html += '</div>';
   } else {
-    html += '<p class="muted">Escolha uma gaveta ou prateleira, no modelo ou na frente acima, para ver o que tem nela.</p>';
+    html += '<p class="muted">Escolha ' + (c.forma === 'caixa' ? 'um compartimento' : 'uma gaveta ou prateleira') + ', no modelo ou no desenho acima, para ver o que tem ' + (c.forma === 'caixa' ? 'nele' : 'nela') + '.</p>';
   }
   if (loose.length) {
-    html += '<div class="loose"><h3>Sem compartimento no modelo</h3><p class="small muted">O Local no armário destes itens não existe neste armário. Corrija na planilha.</p><ul class="items">' + loose.map(itemCard).join('') + '</ul></div>';
+    html += '<div class="loose"><h3>Sem compartimento no modelo</h3><p class="small muted">O Local no armário destes itens não existe neste móvel. Corrija na planilha.</p><ul class="items">' + loose.map(itemCard).join('') + '</ul></div>';
   }
   el.innerHTML = html + foot();
 }
@@ -724,7 +866,7 @@ $('#q').addEventListener('input', () => {
   box.innerHTML = hits.length ? hits.map(i => {
     const c = cabById(i.cab);
     return '<button type="button" data-id="' + esc(i.id) + '"><span>' + esc(i.item) + (i.espec ? ' <span class="muted small">' + esc(i.espec) + '</span>' : '') + '</span><span class="code">' + esc(c ? fullCode(c, i.local) : '?') + '</span></button>';
-  }).join('') : '<div class="none">Nenhum item com “' + esc($('#q').value.trim()) + '”.</div>';
+  }).join('') : '<div class="none">' + (S.loaded ? 'Nenhum item com “' + esc($('#q').value.trim()) + '”.' : 'O estoque ainda não foi lido.') + '</div>';
   box.hidden = false;
 });
 $('#results').addEventListener('click', e => {
@@ -739,11 +881,9 @@ $('#q').addEventListener('keydown', e => { if (e.key === 'Escape') { $('#results
 // ---------- theme ----------
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', rebuildScene);
 new MutationObserver(rebuildScene).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-// o número da porta é desenhado com a fonte Nova Round, que chega depois do primeiro desenho
-if (document.fonts) document.fonts.ready.then(() => { if (S.loaded) rebuildScene(); });
 
-// ---------- leitura da planilha ----------
-// Lê cada aba pelo endpoint gviz do Google em JSONP, que funciona em qualquer site estático sem chave de API.
+// ---------- leitura do estoque ----------
+// Lê a aba pelo endpoint gviz do Google em JSONP, que funciona em qualquer site estático sem chave de API.
 // Se a planilha não estiver aberta para leitura, o Google devolve uma página de login e o callback nunca roda.
 let seq = 0;
 function lerAba(nome) {
@@ -783,32 +923,12 @@ function linhas(t) {
     return o;
   });
 }
-// pega a coluna pelo começo do nome, para "Largura (m)" valer como "largura"
+// pega a coluna pelo começo do nome, para "Qtd." valer como "qtd"
 const get = (r, prefixo) => { for (const k in r) if (k.startsWith(prefixo)) return r[k]; return ''; };
-const txt = v => String(v ?? '').trim();
-const num = (v, d) => { if (typeof v === 'number') return v; const n = parseFloat(String(v).replace(',', '.')); return isFinite(n) ? n : d; };
-// "Armário 2", "armario 2", "A2" e "2" apontam para o mesmo armário
-const chave = s => { const m = /(\d+)/.exec(String(s)); return m ? 'n' + (+m[1]) : norm(s); };
 
-function montar(rowsCab, rowsNiv, rowsEst) {
-  const niv = new Map();
-  rowsNiv.forEach(r => {
-    const a = txt(get(r, 'armario')), tipo = norm(get(r, 'tipo'));
-    if (!a || !tipo) return;
-    const k = chave(a);
-    if (!niv.has(k)) niv.set(k, []);
-    niv.get(k).push({ ordem: num(get(r, 'nivel'), 99), tipo: tipo.startsWith('g') ? 'gaveta' : 'prateleira', div: clamp(Math.round(num(get(r, 'divis'), 1)) || 1, 1, 6) });
-  });
-  const cabs = rowsCab.filter(r => txt(get(r, 'armario'))).map(r => {
-    const id = txt(get(r, 'armario')), key = chave(id), m = /(\d+)/.exec(id);
-    const lv = (niv.get(key) || []).sort((a, b) => a.ordem - b.ordem).map(({ tipo, div }) => ({ tipo, div }));
-    return { id, key, numero: m ? String(+m[1]) : id, nome: txt(get(r, 'nome')),
-      w: clamp(num(get(r, 'largura'), 0.9), 0.3, 3), h: clamp(num(get(r, 'altura'), 1.9), 0.4, 3), d: clamp(num(get(r, 'fundo'), 0.45), 0.2, 1.5),
-      x: num(get(r, 'posicao x'), 0), z: num(get(r, 'posicao z'), 0), rot: num(get(r, 'giro'), 0),
-      niveis: lv.length ? lv : [{ tipo: 'prateleira', div: 1 }] };
-  }).sort((a, b) => (+a.numero || 0) - (+b.numero || 0));
-  const porChave = new Map(cabs.map(c => [c.key, c.id]));
-  const items = rowsEst.filter(r => txt(get(r, 'item'))).map((r, i) => {
+function montarItens(rows) {
+  const porChave = new Map(S.cabs.map(c => [c.key, c.id]));
+  return rows.filter(r => txt(get(r, 'item'))).map((r, i) => {
     const q = get(r, 'qtd');
     return { id: 'i' + i, armario: txt(get(r, 'armario')), cab: porChave.get(chave(get(r, 'armario'))) || null,
       local: txt(get(r, 'local')).toUpperCase().replace(/\s+/g, ''), item: txt(get(r, 'item')), espec: txt(get(r, 'especificacao')),
@@ -816,12 +936,11 @@ function montar(rowsCab, rowsNiv, rowsEst) {
       classificacao: txt(get(r, 'classificacao')), categoria: txt(get(r, 'categoria')), estado: txt(get(r, 'estado')),
       origem: txt(get(r, 'projeto')), conferido: txt(get(r, 'conferido')), obs: txt(get(r, 'observacoes')) };
   });
-  return { cabs, items };
 }
 
 function fromHash() {
   const h = decodeURIComponent((location.hash || '').slice(1)).toUpperCase();
-  const m = /^A(\d+)(?:-([PG]\d+[A-J]?))?$/.exec(h);
+  const m = /^A(\d+)(?:-([PGC]\d+[A-J]?))?$/.exec(h);
   if (!m) return null;
   const c = S.cabs.find(x => x.numero === String(+m[1]));
   return c ? { cabId: c.id, slot: m[2] || null } : null;
@@ -833,38 +952,31 @@ async function carregar() {
   if (carregando) return;
   carregando = true;
   try {
-    const [rc, rn, re] = await Promise.all([lerAba(ABAS.armarios), lerAba(ABAS.niveis), lerAba(ABAS.estoque)]);
-    const { cabs, items } = montar(rc, rn, re);
-    const primeira = !S.loaded, tinhaErro = !!S.erro;
-    const sig = JSON.stringify(cabs), isig = JSON.stringify(items);
-    const mudou = sig !== S.cabsSig || isig !== S.itemsSig;
+    const items = montarItens(await lerAba(ABA_ESTOQUE));
+    const isig = JSON.stringify(items);
+    const mudou = isig !== S.itemsSig || !S.loaded || !!S.erro;
     S.items = items; S.itemsSig = isig; S.erro = null; S.lidoEm = new Date(); S.loaded = true;
-    $('#loading').hidden = true;
-    if (sig !== S.cabsSig) { S.cabs = cabs; S.cabsSig = sig; rebuildScene(); }
-    if (primeira) {
-      const h = fromHash();
-      if (h) openCab(h.cabId, h.slot);
-      else { if (camera) { const g = goalForLab(); Object.assign(cam, { theta: g.theta, phi: g.phi, r: g.r }); cam.target.copy(g.target); } openLab(); }
-    } else if (S.view === 'cab' && !cabById(S.cabId)) {
-      openLab();
-    } else if (mudou || tinhaErro) {
+    if (mudou) {
       if (S.slot && S.view === 'cab' && !slotsOf(cabById(S.cabId)).some(s => s.code === S.slot)) S.slot = null;
-      applyOpenState(); paintSlots(); renderSheet(); renderCrumbs();
+      paintSlots(); renderSheet(); renderCrumbs();
     } else {
       // nada mudou: só troca o rodapé, para não perder a rolagem do painel
       const f = document.querySelector('#sheet .foot'); if (f) f.outerHTML = foot();
     }
   } catch (err) {
     S.erro = err === 'privada' ? 'privada' : 'rede';
-    $('#loading').hidden = true;
     renderSheet();
   } finally {
     carregando = false;
   }
 }
 
+Object.assign(S, montarLab(window.LABORATORIO || {}));
 init3D();
-renderSheet(); renderCrumbs();
+rebuildScene();
+const h0 = fromHash();
+if (h0) openCab(h0.cabId, h0.slot);
+else { if (camera) { const g = goalForLab(); Object.assign(cam, { theta: g.theta, phi: g.phi, r: g.r }); cam.target.copy(g.target); } openLab(); }
 carregar();
 setInterval(() => { if (!document.hidden) carregar(); }, ATUALIZA_MS);
 document.addEventListener('visibilitychange', () => { if (!document.hidden && S.lidoEm && Date.now() - S.lidoEm > 15000) carregar(); });
