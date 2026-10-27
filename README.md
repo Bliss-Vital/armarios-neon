@@ -15,7 +15,9 @@ O site lê a planilha sozinho a cada minuto. Ninguém edita pelo site.
 
 Os móveis foram modelados a partir das fotos de 26/10/2026, com medidas estimadas pelas fotos. São 5 armários de parede, a bancada branca (gaveteiro 6 e armário 7), a bancada preta (gaveteiro volante 8, caixa preta 9, gaveteiro 10 e armário 11) e a maleta 12, em cima da bancada branca.
 
-O Armário 3 também tem o que está dentro dele: as caixas das estações de retrabalho Yaxun, o cesto de solda, a terceira mão e as duas pilhas de caixinhas, com as etiquetas que deu para ler na foto. Ao clicar no cesto de solda (`P3B-1`), as ferramentas dele aparecem em cima da bancada, como na foto de 27/10/2026.
+O Armário 3 também tem o que está dentro dele: as caixas das estações de retrabalho Yaxun, o cesto de solda, a terceira mão, a garra azul de solda e as duas pilhas de caixinhas, com as etiquetas que deu para ler na foto. Ao clicar no cesto de solda (`P3B-1`), as ferramentas dele aparecem em cima da bancada, como na foto de 27/10/2026.
+
+Uma coisa do modelo pode ter foto: ao clicar nela, a foto abre por cima de tudo. A garra azul de solda, no fundo da `P3B`, é a primeira. A foto entra pelo campo `foto` em `laboratorio.js`, e o arquivo fica na pasta `imagens/`. Um item da planilha também pode ter foto, pela coluna Foto da aba Estoque: o item ganha o botão Ver foto.
 
 Para o site conseguir ler o estoque, a planilha precisa estar compartilhada como **Qualquer pessoa com o link: Leitor**. Quem vai cadastrar itens precisa ser adicionado como **Editor**. Se a planilha estiver fechada, o modelo aparece do mesmo jeito, só que sem os itens.
 
@@ -54,5 +56,6 @@ python ferramentas/gerar_planilha.py ferramentas/planilha_armarios_neon.xlsx htt
 |---|---|
 | `index.html` | O site inteiro, com Three.js r128 carregado do cdnjs |
 | `laboratorio.js` | Os móveis do laboratório |
+| `imagens/` | Fotos que o site mostra ao clicar numa coisa ou num item. As fotos do laboratório, em `fotos/`, não são publicadas |
 | `ferramentas/gerar_planilha.py` | Gera a planilha modelo em `.xlsx`, usada para criar a do Google |
-| `ferramentas/planilha_armarios_neon.xlsx` | A planilha modelo gerada, com os itens que deu para ver nas fotos da maleta, do Armário 3 e do cesto de solda |
+| `ferramentas/planilha_armarios_neon.xlsx` | A planilha modelo gerada, com os itens que deu para ver nas fotos da maleta, do Armário 3 e do cesto de solda, e a garra azul de solda |

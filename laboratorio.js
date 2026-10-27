@@ -24,14 +24,20 @@
 //   "Cilindro": frasco ou pote; tampa é a cor da tampa, bico pode ser "borrifador" ou "conta-gotas" e deitado: true
 //            deita o cilindro (um sugador de solda), com a tampa para a direita.
 //   "Terceira mão": base redonda com dois braços flexíveis.
+//   "Garra": garra de solda de prender na mesa, com morsa preta e três braços flexíveis de contas, cada um com bico
+//            e garra jacaré na ponta; cor pinta os braços e cor2 os bicos.
 //   Ferramentas, deitadas com a ponta para a direita: "Ferro de solda" (cor do cabo, cor2 da borracha), "Alicate"
 //            (forma "corte", "crimpador" ou "desencapador"; cor e cor2 dos dois cabos, cabeca da cabeça), "Pinças"
 //            (saquinho com quantidade pinças), "Carretel" (cor do fio, cor2 das abas), "Suporte de ferro", "Escova" e "Manta".
 //   "Caixinhas": pilha de caixinhas organizadoras. colunas traz as etiquetas de cada coluna, da esquerda para a direita
 //            e de cima para baixo; "" é uma caixinha sem etiqueta conhecida e null é um espaço sem caixinha.
 //            Cada caixinha vira um compartimento: P3C-1, P3C-2…, contadas coluna por coluna, de cima para baixo.
+//   foto: vale para qualquer objeto, inclusive os do conteudo de um cesto. É o caminho da foto no site, como
+//            "imagens/garra-azul-de-solda.jpg": ao clicar no objeto, a foto abre por cima do modelo. As fotos do site
+//            ficam em imagens/; a pasta fotos/ guarda as fotos do laboratório e não é publicada.
 // O dentro do Armário 3 saiu da foto de 26/10/2026; as etiquetas vazias não deram para ler na foto.
-// O conteúdo do cesto de solda saiu da foto "caixa rosa de solda", de 27/10/2026.
+// O conteúdo do cesto de solda saiu da foto "caixa rosa de solda", de 27/10/2026. A garra azul de solda entrou em 27/10/2026,
+// com a foto dela, e fica no fundo da P3B, atrás do cesto.
 // Este arquivo é lido também como JSON pelo gerar_planilha.py: comentários só aqui em cima, fora do objeto.
 //
 // Depois de mudar este arquivo, gere a planilha de novo (ferramentas/gerar_planilha.py) para a lista de armários bater.
@@ -69,6 +75,8 @@ window.LABORATORIO = {
             "largura": 0.05, "altura": 0.085, "fundo": 0.12, "x": 0.10 },
           { "objeto": "Terceira mão", "nome": "Terceira mão com limpador de ponta", "cor": "#b59a45",
             "largura": 0.08, "altura": 0.17, "x": 0.155 },
+          { "objeto": "Garra", "nome": "Garra azul de solda", "cor": "#2f62ff", "cor2": "#f07a1e", "foto": "imagens/garra-azul-de-solda.jpg",
+            "largura": 0.26, "altura": 0.30, "fundo": 0.14, "x": 0.20, "recuo": 0.21 },
           { "objeto": "Cesto", "nome": "Cesto de solda", "etiqueta": "Solda", "cor": "#e8c3c7", "ferramentas": true,
             "largura": 0.27, "altura": 0.13, "fundo": 0.20, "x": 0.225,
             "conteudo": [

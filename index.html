@@ -155,6 +155,13 @@ a{color:var(--accent)}
 .loose{border-top:1px solid var(--border);padding-top:12px;display:grid;gap:8px}
 .foot{margin-top:auto;border-top:1px solid var(--border);padding-top:12px;display:grid;gap:8px}
 .steps{margin:0;padding-left:20px;display:grid;gap:4px}
+/* foto de uma coisa do modelo ou de um item da planilha, aberta por cima de tudo */
+.foto{border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text);padding:12px;max-width:min(92vw,760px)}
+.foto::backdrop{background:rgb(0 0 0 / .55)}
+.foto figure{margin:0;display:grid;gap:8px}
+.foto img{display:block;max-width:100%;max-height:72vh;margin:auto;border-radius:6px;background:#fff}
+.foto figcaption{font-weight:600}
+.foto .btns{justify-content:flex-end;margin-top:10px}
 
 @media (max-width:820px){
   .app{grid-template-columns:minmax(0,1fr);grid-template-rows:auto 56vh auto;height:auto;min-height:100%}
@@ -187,6 +194,11 @@ a{color:var(--accent)}
 
   <aside class="sheet" id="sheet" aria-live="polite"></aside>
 </div>
+
+<dialog class="foto" id="foto" aria-labelledby="fotoNome">
+  <figure><img id="fotoImg" alt=""><figcaption id="fotoNome"></figcaption></figure>
+  <div class="btns"><button class="btn" id="fecharFoto" type="button">Fechar</button></div>
+</dialog>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="laboratorio.js"></script>
@@ -277,10 +289,13 @@ const chave = s => { const m = /(\d+)/.exec(String(s)); return m ? 'n' + (+m[1])
 function tipoNivel(s) { const t = norm(s); return t.startsWith('g') ? 'gaveta' : t.startsWith('c') ? 'compartimento' : 'prateleira'; }
 // O que fica dentro dos compartimentos, só para aparecer no modelo: caixas, cestos, frascos, pilhas de caixinhas
 // e as ferramentas que um cesto espalha na bancada quando é aberto
-const OBJETOS = ['caixinhas', 'caixa', 'cesto', 'cilindro', 'terceira mao', 'ferro de solda', 'suporte de ferro', 'alicate', 'pinca', 'carretel', 'escova', 'manta'];
+const OBJETOS = ['caixinhas', 'caixa', 'cesto', 'cilindro', 'terceira mao', 'garra', 'ferro de solda', 'suporte de ferro', 'alicate', 'pinca', 'carretel', 'escova', 'manta'];
 const hex = s => /^#[0-9a-f]{3}([0-9a-f]{3})?$/i.test(txt(s)) ? txt(s) : '';
+// foto: endereço da imagem, um caminho no próprio site (imagens/garra.jpg) ou um link http(s)
+const fotoUrl = s => /^(https?:\/\/|[\w.\-/% ]+$)/i.test(txt(s)) ? txt(s) : '';
 function lerObjeto(o) {
   return { obj: OBJETOS.find(k => norm(o.objeto).startsWith(k)) || 'caixa', nome: txt(o.nome), rotulo: txt(o.rotulo), texto: txt(o.texto), etiqueta: txt(o.etiqueta),
+    foto: fotoUrl(o.foto),
     cor: hex(o.cor), cor2: hex(o.cor2), cabeca: hex(o.cabeca), tampa: hex(o.tampa), bico: norm(o.bico), forma: norm(o.forma),
     transparente: !!o.transparente, ferramentas: !!o.ferramentas, deitado: !!o.deitado, quantidade: Math.round(num(o.quantidade, 0)),
     cores: [].concat(o.cores || []).map(hex).filter(Boolean),
@@ -493,7 +508,7 @@ function buildFurniture(c, M, g) {
         // invisible hit volume filling the shelf bay, tinted when hovered or selected
         mesh = new THREE.Mesh(new THREE.BoxGeometry(cw - 0.03, lh - 0.03, d - 0.08), hitMat());
         mesh.position.set(cx, cy + 0.008, 0.01);
-        mesh.userData = { cabId: c.id, slot: s.code };
+        mesh.userData = { cabId: c.id, slot: s.code, volume: true };
         mesh.userData.cheio = !!(c.dentro || {})[s.code];   // with things inside, the tint stays light so they show through
         g.add(mesh);
         lbl = new THREE.Vector3(cx, cy, d / 2 - 0.05);
@@ -567,9 +582,9 @@ function buildDentro(c, bay, B, g, slots, M) {
     const w = clamp(o.w || 0.1, 0.01, W), h = clamp(o.h || 0.1, 0.01, H), d = clamp(o.d || Math.min(w, D), 0.01, D);
     const obj = buildObjeto(o, w, h, d);
     obj.position.set(B.x0 + o.x + w / 2, B.y0 + o.y, B.z1 - o.recuo - d / 2);
-    // clicking a thing in the bay selects the bay; a basket is a compartment of its own
-    const slot = r.cesto ? r.cesto.code : bay;
-    obj.traverse(m => { if (m.isMesh) { m.userData = { cabId: c.id, slot }; m.castShadow = m.receiveShadow = !m.material.transparent; } });
+    // clicking a thing in the bay selects the bay; a basket is a compartment of its own, and a thing with a photo shows it
+    const slot = r.cesto ? r.cesto.code : bay, foto = o.foto ? { src: o.foto, nome: o.nome } : null;
+    obj.traverse(m => { if (m.isMesh) { m.userData = { cabId: c.id, slot, foto }; m.castShadow = m.receiveShadow = !m.material.transparent; } });
     g.add(obj);
     if (r.cesto) {
       const hitBox = new THREE.Mesh(new THREE.BoxGeometry(w + 0.01, h + 0.01, d + 0.01), hitMat());
@@ -593,7 +608,8 @@ function buildMesa(c, itens, g, slot) {
     const w = o.w || 0.1, h = o.h || 0.05, d = o.d || w;
     const obj = buildObjeto(o, w, h, d);
     obj.position.set(o.x, o.y, o.z); obj.rotation.y = o.giro * Math.PI / 180;
-    obj.traverse(m => { if (m.isMesh) { m.userData = { cabId: c.id, slot }; m.castShadow = true; m.receiveShadow = !m.material.transparent; } });
+    const foto = o.foto ? { src: o.foto, nome: o.nome } : null;
+    obj.traverse(m => { if (m.isMesh) { m.userData = { cabId: c.id, slot, foto }; m.castShadow = true; m.receiveShadow = !m.material.transparent; } });
     if (o.rotulo) obj.userData.rotulo = { texto: o.rotulo, pos: new THREE.Vector3(o.x, o.y + (o.deitado ? o.w : o.h || 0.02) + 0.02, o.z) };
     mesa.add(obj);
   });
@@ -695,6 +711,33 @@ function buildObjeto(o, w, h, d) {
     const m = material(o.cor || '#2e9bd6', { roughness: 0.85 });
     put(box(w, 0.004, d, m), 0, 0.002, 0);
     [-1, 1].forEach(s => { put(box(w, 0.006, 0.008, m), 0, 0.003, s * (d / 2 - 0.004)); put(box(0.008, 0.006, d, m), s * (w / 2 - 0.004), 0.003, 0); });
+  } else if (o.obj === 'garra') {
+    // helping hands on a desk clamp: wing screw, black clamp and swivel hub, then three arms of blue beads, each with an
+    // orange nozzle and an alligator clip in a red sleeve. Drawn for 0.26 x 0.30 x 0.14 m and stretched to the size given.
+    const preto = material('#1d1e21', { roughness: 0.55 }), aco = metal(), azul = material(o.cor || '#2f62ff', { roughness: 0.3 });
+    const laranja = material(o.cor2 || '#f07a1e', { roughness: 0.45 }), borracha = material('#e0402a', { roughness: 0.6 });
+    put(box(0.045, 0.012, 0.016, preto), 0, 0.006, 0);                                              // wing knob
+    put(new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, 0.04, 8), aco), 0, 0.032, 0);       // screw
+    put(box(0.04, 0.008, 0.03, preto), 0.004, 0.052, 0);                                            // lower jaw
+    put(box(0.012, 0.064, 0.03, preto), -0.016, 0.08, 0);                                           // back of the clamp
+    put(box(0.05, 0.026, 0.045, preto), 0, 0.123, 0);                                               // body
+    put(new THREE.Mesh(new THREE.CylinderGeometry(0.013, 0.017, 0.02, 16), preto), 0, 0.146, 0);   // swivel hub
+    const cima = new THREE.Vector3(0, 1, 0), bola = new THREE.SphereGeometry(0.0065, 10, 8);
+    const ao = (obj, p, dir) => { obj.position.copy(p); obj.quaternion.setFromUnitVectors(cima, dir); grp.add(obj); return obj; };
+    [[[0, 0.156, 0], [-0.02, 0.19, 0.005], [-0.07, 0.225, 0.02], [-0.115, 0.255, 0.01], [-0.12, 0.285, -0.02], [-0.09, 0.29, -0.04], [-0.05, 0.275, -0.045]],
+     [[0, 0.156, 0], [0.025, 0.185, -0.01], [0.075, 0.215, -0.03], [0.115, 0.25, -0.02], [0.12, 0.28, 0.01], [0.09, 0.292, 0.035], [0.05, 0.28, 0.045]],
+     [[0, 0.156, 0], [0.005, 0.19, 0.02], [-0.01, 0.215, 0.045], [-0.035, 0.22, 0.055]]].forEach(pts => {
+      const curva = new THREE.CatmullRomCurve3(pts.map(([x, y, z]) => new THREE.Vector3(x, y, z))), n = Math.round(curva.getLength() / 0.009);
+      curva.getSpacedPoints(n).forEach((p, i) => { if (i) put(new THREE.Mesh(bola, azul), p.x, p.y, p.z); });
+      ao(new THREE.Mesh(new THREE.CylinderGeometry(0.0078, 0.0078, 0.014, 14), laranja), curva.getPointAt(0.03), curva.getTangentAt(0.03));   // collar on the hub
+      // the tip, built along +y and turned to follow the end of the arm
+      const jacare = new THREE.Group();
+      [[new THREE.CylinderGeometry(0.0035, 0.007, 0.022, 12), laranja, 0.011], [new THREE.BoxGeometry(0.011, 0.018, 0.011), borracha, 0.031]]
+        .forEach(([geo, m, y]) => { const k = new THREE.Mesh(geo, m); k.position.y = y; jacare.add(k); });
+      [-1, 1].forEach(s => { const k = new THREE.Mesh(new THREE.BoxGeometry(0.006, 0.03, 0.0025), aco); k.position.set(0, 0.054, s * 0.003); k.rotation.x = s * 0.12; jacare.add(k); });
+      ao(jacare, curva.getPointAt(1), curva.getTangentAt(1));
+    });
+    grp.scale.set(w / 0.26, h / 0.3, d / 0.14);
   } else {
     // terceira mão: round brass base with two flexible arms arching over it
     const hb = h * 0.5;
@@ -769,7 +812,7 @@ function buildBox(c, M, g) {
       const cx = -innerW / 2 + cw * (s.col + 0.5), cz = z0 + rd / 2;
       const mesh = new THREE.Mesh(new THREE.BoxGeometry(cw - 0.012, innerH * 0.9, rd - 0.012), hitMat());
       mesh.position.set(cx, t + innerH * 0.45, cz);
-      mesh.userData = { cabId: c.id, slot: s.code };
+      mesh.userData = { cabId: c.id, slot: s.code, volume: true };
       inner.add(mesh);
       slots.set(s.code, { mesh, drawer: null, tipo: s.tipo, lbl: new THREE.Vector3(cx, bh + 0.03, cz) });
     });
@@ -961,9 +1004,17 @@ function hit(e) {
   extras.forEach(x => x.traverse(o => { if (o.isMesh) objs.push(o); }));
   const hits = raycaster.intersectObjects(objs, false);
   if (S.view === 'cab') {
-    // inside an open cabinet, prefer compartments over the panels and benches in front of them
-    const s = hits.find(h => h.object.userData.slot && h.object.userData.cabId === S.cabId);
-    if (s) return s.object.userData;
+    // inside an open cabinet, prefer compartments over the panels and benches in front of them. A shelf bay is an
+    // invisible volume: what stands inside it (a box, a basket, the clamp at the back) wins, unless a shelf or a
+    // divider of the cabinet is in the way
+    let vol = null;
+    for (const h of hits) {
+      const u = h.object.userData;
+      if (u.volume) { if (!vol && u.cabId === S.cabId) vol = u; continue; }
+      if (u.slot && u.cabId === S.cabId) return u;
+      if (vol) break;
+    }
+    if (vol) return vol;
   }
   // otherwise the first thing hit decides, so a bench top does not open the cabinet under it
   const h = hits[0];
@@ -981,6 +1032,7 @@ function pickAt(e) {
   const h = hit(e);
   if (!h) return;
   if (S.view === 'lab' || h.cabId !== S.cabId) openCab(h.cabId);
+  else if (h.foto) { if (baia(S.slot) !== baia(h.slot)) openSlot(h.slot); mostrarFoto(h.foto.src, h.foto.nome); }
   else if (h.slot) openSlot(h.slot);
 }
 
@@ -1070,7 +1122,9 @@ function openCab(id, slot) {
   $('#closeCab').hidden = false;
 }
 function dicaCab(c) {
+  const comFoto = ((c.dentro || {})[baia(S.slot)] || []).find(o => o.foto);
   $('#hint').textContent = focoDe(c, S.slot) === 'mesa:' + S.slot ? 'As coisas do cesto estão na bancada. Clique no cesto de novo para guardar.'
+    : comFoto ? 'Clique em “' + comFoto.nome + '” para ver a foto'
     : c.forma === 'caixa' ? 'Clique num compartimento para ver o que tem nele' : 'Clique numa gaveta ou prateleira para ver o que tem nela';
 }
 function openSlot(code) {
@@ -1089,7 +1143,19 @@ $('#resetView').addEventListener('click', () => {
 });
 // Fechar volta para o laboratório: as portas fecham e a câmera se afasta. Esc faz o mesmo, fora da busca.
 $('#closeCab').addEventListener('click', openLab);
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && S.view === 'cab' && !e.target.closest('input')) openLab(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && S.view === 'cab' && !e.target.closest('input') && !$('#foto').open) openLab(); });
+
+// A foto abre por cima de tudo; fecha no botão, no Esc ou clicando fora dela
+function mostrarFoto(src, nome) {
+  const d = $('#foto'), img = $('#fotoImg');
+  img.src = src; img.alt = nome || 'Foto'; $('#fotoNome').textContent = nome || '';
+  if (!d.open) d.showModal();
+}
+$('#fecharFoto').addEventListener('click', () => $('#foto').close());
+$('#foto').addEventListener('click', e => {
+  const r = e.currentTarget.getBoundingClientRect();
+  if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) e.currentTarget.close();
+});
 
 function renderCrumbs() {
   const el = $('#crumbs');
@@ -1122,6 +1188,7 @@ function itemCard(i, comLocal) {
     (i.origem ? '<span class="chip">de ' + esc(i.origem) + '</span>' : '') + '</div>' +
     (i.obs ? '<div class="small muted">' + esc(i.obs) + '</div>' : '') +
     (i.conferido ? '<div class="small muted">Conferido em ' + esc(i.conferido) + '</div>' : '') +
+    (i.foto ? '<div><button class="btn sm" type="button" data-foto="' + esc(i.foto) + '" data-nome="' + esc(i.item) + '">Ver foto</button></div>' : '') +
     '</li>';
 }
 
@@ -1155,6 +1222,7 @@ function binWall(c, bay) {
 function noModelo(c, bay) {
   const linhas = recipientes(c, bay).filter(r => !r.colunas && r.o.nome).map(r => '<li>' + (r.cesto
     ? '<button type="button" data-slot="' + esc(r.cesto.code) + '">' + esc(r.o.nome) + '</button> <span class="muted">' + esc(r.cesto.code) + ', clique para abrir</span>'
+    : r.o.foto ? '<button type="button" data-foto="' + esc(r.o.foto) + '" data-nome="' + esc(r.o.nome) + '">' + esc(r.o.nome) + '</button> <span class="muted">clique para ver a foto</span>'
     : esc(r.o.nome)) + '</li>');
   return linhas.length ? '<div><h3 style="margin-bottom:6px">Aparece no modelo</h3><ul class="seen small">' + linhas.join('') + '</ul></div>' : '';
 }
@@ -1236,6 +1304,7 @@ function renderSheet() {
 
 $('#sheet').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.foto) return mostrarFoto(b.dataset.foto, b.dataset.nome);
   if (b.dataset.cab) return openCab(b.dataset.cab);
   if (b.dataset.slot) return openSlot(b.dataset.slot);
   if (b.dataset.act === 'reload') { b.disabled = true; b.textContent = 'Lendo…'; carregar(); }
@@ -1338,7 +1407,7 @@ function montarItens(rows) {
       local, item: txt(get(r, 'item')), espec: txt(get(r, 'especificacao')),
       qtd: q === '' ? '' : (typeof q === 'number' ? q.toLocaleString('pt-BR') : txt(q)), unid: txt(get(r, 'unid')),
       classificacao: txt(get(r, 'classificacao')), categoria: txt(get(r, 'categoria')), estado: txt(get(r, 'estado')),
-      origem: txt(get(r, 'projeto')), conferido: txt(get(r, 'conferido')), obs: txt(get(r, 'observacoes')) };
+      origem: txt(get(r, 'projeto')), conferido: txt(get(r, 'conferido')), obs: txt(get(r, 'observacoes')), foto: fotoUrl(get(r, 'foto')) };
   });
 }
 

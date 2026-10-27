@@ -103,6 +103,7 @@ UNIDADES = ["un", "par", "m", "kit", "rolo", "pacote", "caixa"]
 FOTO = "Cadastrado pela foto de 26/10/2026. Conferir no laboratório."
 ETIQUETA = "Pela etiqueta da caixinha, na foto de 26/10/2026. Conferir no laboratório."
 CESTO = "Cadastrado pela foto do cesto de solda de 27/10/2026. Conferir no laboratório."
+GARRA = "Cadastrada em 27/10/2026, com a foto do produto. Conferir no laboratório."
 ITENS_DAS_FOTOS = [
     ["Maleta 12", "C12A", "Eletrônica", "Motores", "Motor brushless", "1 laranja e 3 pretos, com fios", 4, "un", "", "", "", FOTO],
     ["Maleta 12", "C12B", "Eletrônica", "Motores", "Motor brushless", "1 azul pequeno e outros pretos, com fios", 4, "un", "", "", "", FOTO + " Confira a quantidade."],
@@ -116,6 +117,8 @@ ITENS_DAS_FOTOS = [
     ["Armário 3", "P3A", "Eletrônica", "Ferramentas", "Estação de retrabalho Yaxun", "Solda e ar quente, na caixa azul", 1, "un", "", "", "", FOTO],
     ["Armário 3", "P3A", "Eletrônica", "Ferramentas", "Estação de retrabalho SMD Yaxun", "Ar quente, nas caixas pretas", 2, "un", "", "", "", FOTO],
     ["Armário 3", "P3B", "Eletrônica", "Ferramentas", "Terceira mão com limpador de ponta", "Braços flexíveis e base com lã de latão", 1, "un", "", "", "", FOTO],
+    ["Armário 3", "P3B", "Eletrônica", "Ferramentas", "Garra azul de solda", "De prender na mesa, com 3 braços flexíveis e garras jacaré", 1, "un", "", "", "", GARRA,
+     "imagens/garra-azul-de-solda.jpg"],
     ["Armário 3", "P3B", "Eletrônica", "Consumíveis", "Termo retrátil", "No organizador transparente", None, "", "", "", "", FOTO],
     # o que estava no cesto rosa de solda (P3B-1), pela foto de 27/10/2026
     ["Armário 3", "P3B-1", "Eletrônica", "Ferramentas", "Ferro de solda", "Cabo amarelo e preto", 1, "un", "", "", "", CESTO],
@@ -189,9 +192,10 @@ textos = [
     ("    Os códigos de cada móvel estão na aba Locais. No site, clicar num compartimento também mostra o código dele.", fonte),
     ("3. Em Qtd, escreva só o número (10, não \"10 un\"). A unidade vai na coluna ao lado.", fonte),
     ("4. O site lê a planilha sozinho a cada minuto. Para ver na hora, clique em Atualizar no site.", fonte),
+    ("5. A coluna Foto é opcional: um link de imagem (https://...) ou uma foto da pasta imagens do site (imagens/garra-azul-de-solda.jpg). No site, o item ganha o botão Ver foto.", fonte),
     ("", fonte),
     ("Exemplo de linha na aba Estoque", Font(name=F, size=12, bold=True)),
-    ("Gaveteiro 6  |  G6A  |  Eletrônica  |  Conectores  |  XT60 fêmea  |  Amass, original  |  10  |  un  |  Novo  |  (vazio)  |  26/10/2026  |  (vazio)", fonte),
+    ("Gaveteiro 6  |  G6A  |  Eletrônica  |  Conectores  |  XT60 fêmea  |  Amass, original  |  10  |  un  |  Novo  |  (vazio)  |  26/10/2026  |  (vazio)  |  (vazio)", fonte),
     ("", fonte),
     ("Os móveis do modelo", Font(name=F, size=12, bold=True)),
     ("Os móveis, as medidas e as gavetas de cada um ficam no próprio site, no arquivo laboratorio.js, e não nesta planilha.", fonte),
@@ -209,8 +213,8 @@ ws["B2"].hyperlink = site
 # ---- Estoque ----
 ws = wb.create_sheet("Estoque")
 cols = ["Armário", "Local no armário", "Classificação", "Categoria", "Item", "Especificação / modelo",
-        "Qtd", "Unid.", "Estado", "Projeto de origem", "Conferido em", "Observações"]
-cabecalho(ws, cols, [14, 12, 15, 26, 30, 32, 7, 8, 18, 18, 13, 40])
+        "Qtd", "Unid.", "Estado", "Projeto de origem", "Conferido em", "Observações", "Foto"]
+cabecalho(ws, cols, [14, 12, 15, 26, 30, 32, 7, 8, 18, 18, 13, 40, 34])
 # formato de texto na coluna inteira, para G1 e P2B nunca virarem número ou data
 ws.column_dimensions["B"].number_format = "@"
 for r, valores in enumerate(ITENS_DAS_FOTOS, start=2):
@@ -224,7 +228,7 @@ lista(ws, "C", LINHAS, "=Listas!$B$2:$B$30")
 lista(ws, "D", LINHAS, "=Listas!$C$2:$C$40")
 lista(ws, "H", LINHAS, "=Listas!$E$2:$E$30")
 lista(ws, "I", LINHAS, "=Listas!$D$2:$D$30")
-ws.auto_filter.ref = f"A1:L{LINHAS}"
+ws.auto_filter.ref = f"A1:M{LINHAS}"
 
 # ---- Locais ----
 ws = wb.create_sheet("Locais")
