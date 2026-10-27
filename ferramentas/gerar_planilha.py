@@ -72,16 +72,20 @@ def codigos(movel):
             cont[tipo] += 1
             desc = base if div == 1 else base + ", " + (LADOS[div][c] if div in LADOS and not caixa else "divisão " + str(c + 1))
             yield codigo, desc
+            # caixinhas e cestos viram compartimentos, numerados na ordem em que aparecem no dentro
             k = 0
             for obj in dentro.get(codigo, []):
-                if not norm(obj.get("objeto")).startswith("caixinhas"):
-                    continue
-                for coluna in obj.get("colunas") or []:
-                    for etiqueta in coluna:
-                        if etiqueta is None:
-                            continue
-                        k += 1
-                        yield f"{codigo}-{k}", f"{desc} · caixinha {k}" + (f" ({etiqueta})" if etiqueta else "")
+                tipo_obj = norm(obj.get("objeto"))
+                if tipo_obj.startswith("cesto"):
+                    k += 1
+                    yield f"{codigo}-{k}", f"{desc} · {(obj.get('nome') or 'cesto').lower()}"
+                elif tipo_obj.startswith("caixinhas"):
+                    for coluna in obj.get("colunas") or []:
+                        for etiqueta in coluna:
+                            if etiqueta is None:
+                                continue
+                            k += 1
+                            yield f"{codigo}-{k}", f"{desc} · caixinha {k}" + (f" ({etiqueta})" if etiqueta else "")
 
 
 LAB = ler_laboratorio()
@@ -95,9 +99,10 @@ CATEGORIAS = ["ESC", "Motores", "Baterias", "Carregadores", "Conectores", "Fios 
 ESTADOS = ["Novo", "Usado (funcionando)", "Não testado", "Com defeito"]
 UNIDADES = ["un", "par", "m", "kit", "rolo", "pacote", "caixa"]
 
-# O que deu para ver nas fotos de 26/10/2026 (maleta preta e Armário 3). Fica marcado para alguém conferir no laboratório.
+# O que deu para ver nas fotos (maleta preta, Armário 3 e cesto de solda). Fica marcado para alguém conferir no laboratório.
 FOTO = "Cadastrado pela foto de 26/10/2026. Conferir no laboratório."
 ETIQUETA = "Pela etiqueta da caixinha, na foto de 26/10/2026. Conferir no laboratório."
+CESTO = "Cadastrado pela foto do cesto de solda de 27/10/2026. Conferir no laboratório."
 ITENS_DAS_FOTOS = [
     ["Maleta 12", "C12A", "Eletrônica", "Motores", "Motor brushless", "1 laranja e 3 pretos, com fios", 4, "un", "", "", "", FOTO],
     ["Maleta 12", "C12B", "Eletrônica", "Motores", "Motor brushless", "1 azul pequeno e outros pretos, com fios", 4, "un", "", "", "", FOTO + " Confira a quantidade."],
@@ -112,7 +117,25 @@ ITENS_DAS_FOTOS = [
     ["Armário 3", "P3A", "Eletrônica", "Ferramentas", "Estação de retrabalho SMD Yaxun", "Ar quente, nas caixas pretas", 2, "un", "", "", "", FOTO],
     ["Armário 3", "P3B", "Eletrônica", "Ferramentas", "Terceira mão com limpador de ponta", "Braços flexíveis e base com lã de latão", 1, "un", "", "", "", FOTO],
     ["Armário 3", "P3B", "Eletrônica", "Consumíveis", "Termo retrátil", "No organizador transparente", None, "", "", "", "", FOTO],
-    ["Armário 3", "P3B", "Eletrônica", "Ferramentas", "Cesto de solda", "Ferro de solda, alicates e chaves", 1, "un", "", "", "", FOTO + " Veja o que tem dentro."],
+    # o que estava no cesto rosa de solda (P3B-1), pela foto de 27/10/2026
+    ["Armário 3", "P3B-1", "Eletrônica", "Ferramentas", "Ferro de solda", "Cabo amarelo e preto", 1, "un", "", "", "", CESTO],
+    ["Armário 3", "P3B-1", "Eletrônica", "Ferramentas", "Ferro de solda Hikari", "Cabo branco", 1, "un", "", "", "", CESTO],
+    ["Armário 3", "P3B-1", "Eletrônica", "Ferramentas", "Suporte para ferro de solda Yaxun", "Azul, com bandeja para a esponja", 1, "un", "", "", "", CESTO],
+    ["Armário 3", "P3B-1", "Eletrônica", "Ferramentas", "Alicate de corte rente Hikari", "Cabo amarelo e preto", 1, "un", "", "", "", CESTO],
+    ["Armário 3", "P3B-1", "Eletrônica", "Ferramentas", "Alicate de corte rente pequeno", "Cabo cinza", 1, "un", "", "", "", CESTO],
+    ["Armário 3", "P3B-1", "Eletrônica", "Ferramentas", "Alicate crimpador de terminais", "Cabo vermelho e azul", 1, "un", "", "", "", CESTO],
+    ["Armário 3", "P3B-1", "Eletrônica", "Ferramentas", "Alicate desencapador automático", "Laranja e amarelo", 1, "un", "", "", "", CESTO],
+    ["Armário 3", "P3B-1", "Eletrônica", "Ferramentas", "Alicate desencapador automático", "Vermelho e preto", 1, "un", "", "", "", CESTO],
+    ["Armário 3", "P3B-1", "Eletrônica", "Ferramentas", "Pinça antiestática", "No saquinho amarelo", 1, "kit", "", "", "", CESTO + " Confira quantas pinças tem no saquinho."],
+    ["Armário 3", "P3B-1", "Eletrônica", "Ferramentas", "Jogo de pinças antiestáticas", "6 pinças, pontas retas e curvas", 1, "kit", "", "", "", CESTO],
+    ["Armário 3", "P3B-1", "Eletrônica", "Consumíveis", "Estanho (fio de solda)", "Carretel", 2, "rolo", "", "", "", CESTO + " Parecem 2 carretéis empilhados."],
+    ["Armário 3", "P3B-1", "Eletrônica", "Consumíveis", "Pasta de solda Cobix", "Pote de 110 g", 1, "un", "", "", "", CESTO],
+    ["Armário 3", "P3B-1", "Eletrônica", "Consumíveis", "Fluxo de solda líquido", "Frasco com bico; o rótulo começa com \"Res\"", 1, "un", "", "", "", CESTO + " Leia o rótulo para confirmar o que é."],
+    ["Armário 3", "P3B-1", "Eletrônica", "Consumíveis", "Malha dessoldadora", "Carretel pequeno roxo", 1, "un", "", "", "", CESTO],
+    ["Armário 3", "P3B-1", "Eletrônica", "Ferramentas", "Sugador de solda", "Azul", 1, "un", "", "", "", CESTO],
+    ["Armário 3", "P3B-1", "Eletrônica", "Ferramentas", "Escova pequena de limpeza", "Cerdas pretas", 1, "un", "", "", "", CESTO],
+    ["Armário 3", "P3B-1", "Eletrônica", "Ferramentas", "Manta de silicone para solda", "Azul, com divisórias", 1, "un", "", "", "", CESTO + " Confira se ela fica guardada no cesto."],
+    ["Armário 3", "P3B-1", "", "Outros", "Peça preta de plástico", "Retangular, com uma janela no meio", 1, "un", "", "", "", CESTO + " Não deu para saber o que é pela foto."],
     ["Armário 3", "P3C-3", "", "Consumíveis", "Cola quente", "", None, "", "", "", "", ETIQUETA],
     ["Armário 3", "P3C-6", "Eletrônica", "Conectores", "Terminais", "", None, "", "", "", "", ETIQUETA],
     ["Armário 3", "P3C-10", "Eletrônica", "Fios e cabos", "Cabos", "", None, "", "", "", "", ETIQUETA],

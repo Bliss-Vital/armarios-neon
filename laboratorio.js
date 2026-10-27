@@ -18,12 +18,20 @@
 //   "Caixa": caixa fechada. texto é o que vem impresso na frente (\n quebra a linha), transparente deixa ver dentro
 //            e cores pinta o que tem dentro, de cima para baixo.
 //   "Cesto": cesto aberto, com etiqueta na frente; ferramentas: true põe cabos de ferramenta saindo dele.
-//   "Cilindro": frasco ou pote; tampa é a cor da tampa ou do borrifador.
+//            Cada cesto vira um compartimento (P3B-1). conteudo lista o que tem nele: ao clicar no cesto, essas coisas
+//            aparecem em cima da bancada embaixo do móvel. Ali x é a distância da ponta esquerda do móvel e z a distância
+//            do fundo da bancada, os dois até o centro da coisa; giro vira ela em graus e rotulo é o nome curto mostrado ao lado.
+//   "Cilindro": frasco ou pote; tampa é a cor da tampa, bico pode ser "borrifador" ou "conta-gotas" e deitado: true
+//            deita o cilindro (um sugador de solda), com a tampa para a direita.
 //   "Terceira mão": base redonda com dois braços flexíveis.
+//   Ferramentas, deitadas com a ponta para a direita: "Ferro de solda" (cor do cabo, cor2 da borracha), "Alicate"
+//            (forma "corte", "crimpador" ou "desencapador"; cor e cor2 dos dois cabos, cabeca da cabeça), "Pinças"
+//            (saquinho com quantidade pinças), "Carretel" (cor do fio, cor2 das abas), "Suporte de ferro", "Escova" e "Manta".
 //   "Caixinhas": pilha de caixinhas organizadoras. colunas traz as etiquetas de cada coluna, da esquerda para a direita
 //            e de cima para baixo; "" é uma caixinha sem etiqueta conhecida e null é um espaço sem caixinha.
 //            Cada caixinha vira um compartimento: P3C-1, P3C-2…, contadas coluna por coluna, de cima para baixo.
 // O dentro do Armário 3 saiu da foto de 26/10/2026; as etiquetas vazias não deram para ler na foto.
+// O conteúdo do cesto de solda saiu da foto "caixa rosa de solda", de 27/10/2026.
 // Este arquivo é lido também como JSON pelo gerar_planilha.py: comentários só aqui em cima, fora do objeto.
 //
 // Depois de mudar este arquivo, gere a planilha de novo (ferramentas/gerar_planilha.py) para a lista de armários bater.
@@ -61,8 +69,45 @@ window.LABORATORIO = {
             "largura": 0.05, "altura": 0.085, "fundo": 0.12, "x": 0.10 },
           { "objeto": "Terceira mão", "nome": "Terceira mão com limpador de ponta", "cor": "#b59a45",
             "largura": 0.08, "altura": 0.17, "x": 0.155 },
-          { "objeto": "Cesto", "nome": "Cesto de solda (ferro, alicates e chaves)", "etiqueta": "Solda", "cor": "#e8c3c7", "ferramentas": true,
-            "largura": 0.27, "altura": 0.13, "fundo": 0.20, "x": 0.225 }
+          { "objeto": "Cesto", "nome": "Cesto de solda", "etiqueta": "Solda", "cor": "#e8c3c7", "ferramentas": true,
+            "largura": 0.27, "altura": 0.13, "fundo": 0.20, "x": 0.225,
+            "conteudo": [
+              { "objeto": "Suporte de ferro", "nome": "Suporte do ferro de solda Yaxun", "rotulo": "Suporte do ferro", "cor": "#2a3f8f",
+                "largura": 0.09, "fundo": 0.13, "x": 0.17, "z": 0.27 },
+              { "objeto": "Pinças", "nome": "Pinça antiestática, no saquinho amarelo", "rotulo": "Pinça", "cor": "#e9cf2a", "quantidade": 1,
+                "largura": 0.07, "fundo": 0.15, "x": 0.34, "z": 0.27, "giro": 8 },
+              { "objeto": "Pinças", "nome": "Jogo de 6 pinças antiestáticas", "rotulo": "6 pinças", "cor": "#dfe36a", "quantidade": 6,
+                "largura": 0.12, "fundo": 0.14, "x": 0.5, "z": 0.27 },
+              { "objeto": "Carretel", "nome": "Estanho (fio de solda), 2 carretéis", "rotulo": "Estanho", "cor2": "#3aa05a",
+                "largura": 0.09, "altura": 0.055, "x": 0.7, "z": 0.17, "y": 0.055 },
+              { "objeto": "Carretel", "cor2": "#3aa05a", "largura": 0.09, "altura": 0.055, "x": 0.7, "z": 0.17 },
+              { "objeto": "Cilindro", "nome": "Malha dessoldadora", "rotulo": "Malha", "cor": "#6b3fa0", "largura": 0.05, "altura": 0.012, "x": 0.13, "z": 0.41 },
+              { "objeto": "Cilindro", "nome": "Pasta de solda Cobix, 110 g", "rotulo": "Pasta Cobix", "cor": "#e8641e", "tampa": "#e8641e",
+                "largura": 0.075, "altura": 0.065, "x": 0.23, "z": 0.45 },
+              { "objeto": "Caixa", "nome": "Peça preta de plástico (não identificada)", "rotulo": "Peça preta", "cor": "#1d1e21",
+                "largura": 0.07, "altura": 0.025, "fundo": 0.055, "x": 0.06, "z": 0.47 },
+              { "objeto": "Alicate", "forma": "crimpador", "nome": "Alicate crimpador de terminais", "rotulo": "Crimpador",
+                "cor": "#d8322b", "cor2": "#d8322b", "cabeca": "#26282b", "largura": 0.21, "x": 0.38, "z": 0.45, "giro": 92 },
+              { "objeto": "Alicate", "forma": "desencapador", "nome": "Alicate desencapador automático laranja", "rotulo": "Desencapador",
+                "cor": "#f08a1c", "cor2": "#f2b41c", "cabeca": "#f08a1c", "largura": 0.2, "x": 0.52, "z": 0.45, "giro": 80 },
+              { "objeto": "Alicate", "forma": "desencapador", "nome": "Alicate desencapador automático vermelho", "rotulo": "Desencapador",
+                "cor": "#d8322b", "cor2": "#1f2023", "cabeca": "#1f2023", "largura": 0.2, "x": 0.66, "z": 0.45, "giro": 100 },
+              { "objeto": "Cilindro", "nome": "Fluxo de solda líquido", "rotulo": "Fluxo", "cor": "#f1d9a0", "transparente": true,
+                "tampa": "#f4f4f0", "bico": "conta-gotas", "largura": 0.045, "altura": 0.11, "x": 0.8, "z": 0.38 },
+              { "objeto": "Cilindro", "nome": "Sugador de solda", "rotulo": "Sugador", "cor": "#cfd5da", "transparente": true, "tampa": "#2f5fd0",
+                "deitado": true, "largura": 0.025, "altura": 0.19, "x": 0.92, "z": 0.4, "giro": 95 },
+              { "objeto": "Escova", "nome": "Escova pequena de limpeza", "rotulo": "Escova", "largura": 0.15, "x": 1.06, "z": 0.3, "giro": 40 },
+              { "objeto": "Manta", "nome": "Manta de silicone azul para solda", "rotulo": "Manta", "cor": "#2e9bd6",
+                "largura": 0.3, "fundo": 0.42, "x": 1.3, "z": 0.4, "giro": -8 },
+              { "objeto": "Alicate", "forma": "corte", "nome": "Alicate de corte rente Hikari", "rotulo": "Corte Hikari",
+                "cor": "#e3b81f", "cabeca": "#1f2023", "largura": 0.16, "x": 0.1, "z": 0.58, "giro": -140 },
+              { "objeto": "Alicate", "forma": "corte", "nome": "Alicate de corte rente pequeno, cabo cinza", "rotulo": "Corte cinza",
+                "cor": "#7d8389", "cabeca": "#5d4c3c", "largura": 0.14, "x": 0.26, "z": 0.57, "giro": 50 },
+              { "objeto": "Ferro de solda", "nome": "Ferro de solda, cabo amarelo", "rotulo": "Ferro de solda", "cor": "#e6c01e", "cor2": "#1f2023",
+                "largura": 0.23, "x": 0.56, "z": 0.53, "giro": -8 },
+              { "objeto": "Ferro de solda", "nome": "Ferro de solda Hikari", "rotulo": "Ferro Hikari", "cor": "#dcded9", "cor2": "#2e9a6e",
+                "largura": 0.22, "x": 0.52, "z": 0.61, "giro": -10 }
+            ] }
         ],
         "P3C": [
           { "objeto": "Caixinhas", "altura": 0.40, "fundo": 0.24,
@@ -71,7 +116,7 @@ window.LABORATORIO = {
         "P3D": [
           { "objeto": "Caixinhas", "largura": 0.43, "altura": 0.30, "fundo": 0.24,
             "colunas": [ ["Fita crepe", "Protoboard", ""], ["Fita isolante", "", ""], ["", "Pilhas", ""], ["Jumpers", "Jumpers", "Jumpers", "Jumpers"] ] },
-          { "objeto": "Cilindro", "nome": "Borrifador", "transparente": true, "tampa": "#2f8fd8", "largura": 0.05, "altura": 0.19, "x": 0.44 }
+          { "objeto": "Cilindro", "nome": "Borrifador", "transparente": true, "tampa": "#2f8fd8", "bico": "borrifador", "largura": 0.05, "altura": 0.19, "x": 0.44 }
         ]
       } },
     { "armario": "Armário 4", "nome": "Maletas de ferramentas", "tipo": "Armário de parede",

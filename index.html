@@ -130,6 +130,7 @@ a{color:var(--accent)}
 .bins button .et{font:500 11px/1.2 var(--f-body);text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bins button .et.none{color:var(--muted)}
 .seen{margin:0;padding-left:18px;display:grid;gap:2px}
+.seen button{background:none;border:0;padding:0;color:var(--accent);font-weight:700;cursor:pointer;text-align:left;text-decoration:underline}
 
 .items{display:grid;gap:8px;margin:0;padding:0;list-style:none}
 .item{border:1px solid var(--border);border-radius:8px;padding:10px 12px;background:var(--bg);display:grid;gap:4px}
@@ -239,19 +240,28 @@ function slotsOf(cab) {
       const code = PREFIXO[lv.tipo] + cab.numero + (total[lv.tipo] > 1 ? LETTERS[k] : '');
       const label = base + (lv.div > 1 ? ', ' + (LADOS[lv.div] && cab.forma !== 'caixa' ? LADOS[lv.div][c] : 'divisão ' + (c + 1)) : '');
       out.push({ code, level: li, col: c, div: lv.div, tipo: lv.tipo, label });
-      caixinhas(cab, code).forEach(g => g.colunas.forEach(col => col.forEach(b => {
-        if (b) out.push({ code: b.code, parent: code, level: li, col: c, tipo: 'caixinha', etiqueta: b.etiqueta, short: 'Caixinha ' + b.n, label: label + ' · caixinha ' + b.n });
-      })));
+      recipientes(cab, code).forEach(r => {
+        if (r.cesto) out.push({ code: r.cesto.code, parent: code, level: li, col: c, tipo: 'cesto', etiqueta: r.o.etiqueta, short: r.o.nome || 'Cesto ' + r.cesto.n,
+          label: label + ' · ' + (r.o.nome || 'cesto ' + r.cesto.n).toLowerCase(), conteudo: r.o.conteudo.map(x => x.nome).filter(Boolean) });
+        else if (r.colunas) r.colunas.forEach(col => col.forEach(b => {
+          if (b) out.push({ code: b.code, parent: code, level: li, col: c, tipo: 'caixinha', etiqueta: b.etiqueta, short: 'Caixinha ' + b.n, label: label + ' · caixinha ' + b.n });
+        }));
+      });
     }
   });
   return out;
 }
-// Caixinhas empilhadas num compartimento, numeradas coluna por coluna (da esquerda), de cima para baixo
-function caixinhas(cab, bay) {
+// What sits in a compartment, in order. Bins and baskets are compartments of their own, numbered in that order:
+// the bins of a stack column by column (from the left), top to bottom.
+function recipientes(cab, bay) {
   let k = 0;
-  return ((cab.dentro || {})[bay] || []).filter(o => o.obj === 'caixinhas')
-    .map(o => ({ o, colunas: o.colunas.map(col => col.map(et => et === null ? null : { code: bay + '-' + (++k), n: k, etiqueta: et })) }));
+  return ((cab.dentro || {})[bay] || []).map(o => {
+    if (o.obj === 'caixinhas') return { o, colunas: o.colunas.map(col => col.map(et => et === null ? null : { code: bay + '-' + (++k), n: k, etiqueta: et })) };
+    if (o.obj === 'cesto') return { o, cesto: { code: bay + '-' + (++k), n: k } };
+    return { o };
+  });
 }
+const caixinhas = (cab, bay) => recipientes(cab, bay).filter(r => r.colunas);
 const baia = code => String(code || '').split('-')[0];
 const cabById = id => S.cabs.find(c => c.id === id);
 // a compartment's items include the ones in its bins
@@ -265,19 +275,22 @@ const itensTxt = n => n + (n === 1 ? ' item' : ' itens');
 // "Armário 2", "armario 2", "A2" e "2" apontam para o mesmo móvel
 const chave = s => { const m = /(\d+)/.exec(String(s)); return m ? 'n' + (+m[1]) : norm(s); };
 function tipoNivel(s) { const t = norm(s); return t.startsWith('g') ? 'gaveta' : t.startsWith('c') ? 'compartimento' : 'prateleira'; }
-// O que fica dentro dos compartimentos, só para aparecer no modelo: caixas, cestos, frascos e pilhas de caixinhas
-const OBJETOS = ['caixinhas', 'caixa', 'cesto', 'cilindro', 'terceira mao'];
+// O que fica dentro dos compartimentos, só para aparecer no modelo: caixas, cestos, frascos, pilhas de caixinhas
+// e as ferramentas que um cesto espalha na bancada quando é aberto
+const OBJETOS = ['caixinhas', 'caixa', 'cesto', 'cilindro', 'terceira mao', 'ferro de solda', 'suporte de ferro', 'alicate', 'pinca', 'carretel', 'escova', 'manta'];
 const hex = s => /^#[0-9a-f]{3}([0-9a-f]{3})?$/i.test(txt(s)) ? txt(s) : '';
+function lerObjeto(o) {
+  return { obj: OBJETOS.find(k => norm(o.objeto).startsWith(k)) || 'caixa', nome: txt(o.nome), rotulo: txt(o.rotulo), texto: txt(o.texto), etiqueta: txt(o.etiqueta),
+    cor: hex(o.cor), cor2: hex(o.cor2), cabeca: hex(o.cabeca), tampa: hex(o.tampa), bico: norm(o.bico), forma: norm(o.forma),
+    transparente: !!o.transparente, ferramentas: !!o.ferramentas, deitado: !!o.deitado, quantidade: Math.round(num(o.quantidade, 0)),
+    cores: [].concat(o.cores || []).map(hex).filter(Boolean),
+    w: num(o.largura, 0), h: num(o.altura, 0), d: num(o.fundo, 0), x: num(o.x, 0), y: num(o.y, 0), z: num(o.z, 0), recuo: num(o.recuo, 0), giro: num(o.giro, 0),
+    colunas: [].concat(o.colunas || []).map(col => [].concat(col || []).map(e => e === null ? null : txt(e))),
+    conteudo: [].concat(o.conteudo || []).map(lerObjeto) };
+}
 function lerDentro(d) {
   const out = {};
-  Object.keys(d || {}).forEach(code => {
-    out[code.toUpperCase().replace(/\s+/g, '')] = [].concat(d[code] || []).map(o => ({
-      obj: OBJETOS.find(k => norm(o.objeto).startsWith(k)) || 'caixa', nome: txt(o.nome), texto: txt(o.texto), etiqueta: txt(o.etiqueta),
-      cor: hex(o.cor), tampa: hex(o.tampa), transparente: !!o.transparente, ferramentas: !!o.ferramentas,
-      cores: [].concat(o.cores || []).map(hex).filter(Boolean),
-      w: num(o.largura, 0), h: num(o.altura, 0), d: num(o.fundo, 0), x: num(o.x, 0), y: num(o.y, 0), recuo: num(o.recuo, 0),
-      colunas: [].concat(o.colunas || []).map(col => [].concat(col || []).map(e => e === null ? null : txt(e))) }));
-  });
+  Object.keys(d || {}).forEach(code => { out[code.toUpperCase().replace(/\s+/g, '')] = [].concat(d[code] || []).map(lerObjeto); });
   return out;
 }
 function montarLab(lab) {
@@ -518,7 +531,7 @@ function buildFurniture(c, M, g) {
 
 // ---------- o que tem dentro (laboratorio.js, "dentro") ----------
 const material = (cor, o) => new THREE.MeshStandardMaterial(Object.assign({ color: new THREE.Color(cor), roughness: 0.7 }, o));
-const vidro = () => new THREE.MeshStandardMaterial({ color: 0xdfe8ec, transparent: true, opacity: 0.32, roughness: 0.15, depthWrite: false });
+const vidro = cor => new THREE.MeshStandardMaterial({ color: cor ? new THREE.Color(cor) : 0xdfe8ec, transparent: true, opacity: cor ? 0.6 : 0.32, roughness: 0.15, depthWrite: false });
 const tintaPara = cor => new THREE.Color(cor).getHSL({}).l > 0.6 ? '#1d1f22' : '#f4f4f0';
 
 // Texto impresso numa face: a frente de uma caixa de produto ou a etiqueta de uma caixinha. A primeira linha sai maior.
@@ -546,25 +559,54 @@ function etiqueta(parent, texto, w, h, x, y, z) {
 
 // B is the free space of the bay, in the cabinet's coordinates
 function buildDentro(c, bay, B, g, slots, M) {
-  const objs = (c.dentro || {})[bay]; if (!objs) return;
+  if (!(c.dentro || {})[bay]) return;
   const W = B.x1 - B.x0, H = B.y1 - B.y0, D = B.z1 - B.z0;
-  const grupos = caixinhas(c, bay);
-  let gi = 0;
-  objs.forEach(o => {
-    if (o.obj === 'caixinhas') { buildBins(c, grupos[gi++], B, g, slots, M); return; }
+  recipientes(c, bay).forEach(r => {
+    const o = r.o;
+    if (r.colunas) { buildBins(c, r, B, g, slots, M); return; }
     const w = clamp(o.w || 0.1, 0.01, W), h = clamp(o.h || 0.1, 0.01, H), d = clamp(o.d || Math.min(w, D), 0.01, D);
     const obj = buildObjeto(o, w, h, d);
     obj.position.set(B.x0 + o.x + w / 2, B.y0 + o.y, B.z1 - o.recuo - d / 2);
-    // clicking a thing in the bay selects the bay
-    obj.traverse(m => { if (m.isMesh) { m.userData = { cabId: c.id, slot: bay }; m.castShadow = m.receiveShadow = !m.material.transparent; } });
+    // clicking a thing in the bay selects the bay; a basket is a compartment of its own
+    const slot = r.cesto ? r.cesto.code : bay;
+    obj.traverse(m => { if (m.isMesh) { m.userData = { cabId: c.id, slot }; m.castShadow = m.receiveShadow = !m.material.transparent; } });
     g.add(obj);
+    if (r.cesto) {
+      const hitBox = new THREE.Mesh(new THREE.BoxGeometry(w + 0.01, h + 0.01, d + 0.01), hitMat());
+      hitBox.position.y = h / 2; hitBox.userData = { cabId: c.id, slot }; obj.add(hitBox);
+      slots.set(slot, { mesh: hitBox, drawer: null, tipo: 'cesto', parent: bay, lbl: new THREE.Vector3(0, h + 0.02, d / 2),
+        ferramentas: obj.userData.ferramentas || null, mesa: o.conteudo.length ? buildMesa(c, o.conteudo, g, slot) : null });
+    }
   });
 }
 
-// One thing on a shelf, standing on its base at the origin
+// What a basket holds, laid out on the bench under the unit while the basket is open (on the floor in front of it
+// if there is no bench). x runs from the unit's left end and z from the back of the bench, both to each thing's centre.
+function buildMesa(c, itens, g, slot) {
+  const mesa = new THREE.Group();
+  const pegada = o => (Math.round(o.rot / 90) % 2) ? { w: o.d, d: o.w } : { w: o.w, d: o.d };
+  const b = S.bancadas.find(b => { const p = pegada(b); return Math.abs(c.x - b.x) < p.w / 2 && Math.abs(c.z - b.z) < p.d / 2 + 0.3 && b.h <= c.y + 0.01; });
+  g.updateMatrixWorld(true);
+  mesa.position.copy(g.worldToLocal(new THREE.Vector3(c.x - c.w / 2, b ? b.h : 0, b ? b.z - pegada(b).d / 2 : c.z + c.d / 2 + 0.1)));
+  mesa.rotation.y = -g.rotation.y;
+  itens.forEach(o => {
+    const w = o.w || 0.1, h = o.h || 0.05, d = o.d || w;
+    const obj = buildObjeto(o, w, h, d);
+    obj.position.set(o.x, o.y, o.z); obj.rotation.y = o.giro * Math.PI / 180;
+    obj.traverse(m => { if (m.isMesh) { m.userData = { cabId: c.id, slot }; m.castShadow = true; m.receiveShadow = !m.material.transparent; } });
+    if (o.rotulo) obj.userData.rotulo = { texto: o.rotulo, pos: new THREE.Vector3(o.x, o.y + (o.deitado ? o.w : o.h || 0.02) + 0.02, o.z) };
+    mesa.add(obj);
+  });
+  mesa.visible = false;
+  g.add(mesa);
+  return mesa;
+}
+
+// One thing on a shelf or on the bench, standing on its base at the origin; long tools lie along x, tip or head at +x
 function buildObjeto(o, w, h, d) {
   const grp = new THREE.Group();
   const put = (mesh, x, y, z) => { mesh.position.set(x, y, z); grp.add(mesh); return mesh; };
+  const metal = () => material('#8e9296', { metalness: 0.7, roughness: 0.35 });
   if (o.obj === 'caixa') {
     const cor = o.cor || '#9a7b55';
     const lado = o.transparente ? vidro() : material(cor, { roughness: 0.8 });
@@ -580,21 +622,79 @@ function buildObjeto(o, w, h, d) {
       put(new THREE.Mesh(new THREE.BoxGeometry(t, h, d), m), s * (w - t) / 2, h / 2, 0);
       put(new THREE.Mesh(new THREE.BoxGeometry(w, h, t), m), 0, h / 2, s * (d - t) / 2);
     });
-    // tool handles sticking out: [colour, x across the basket, length in basket heights, tilt]
-    if (o.ferramentas) [['#1e1f22', -0.32, 1.8, 0.3], ['#e2b616', -0.12, 1.5, -0.2], ['#7b8288', 0.06, 1.95, 0.25], ['#1e1f22', 0.22, 2.1, -0.1], ['#e2b616', 0.36, 1.45, 0.15]]
-      .forEach(([k, fx, fh, tilt]) => {
-        const len = h * fh, tool = put(new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, len, 8), material(k, { roughness: 0.5 })), fx * w, len / 2 + 0.01, (tilt > 0 ? -1 : 1) * d * 0.15);
-        tool.rotation.set(tilt * 0.4, 0, tilt * 0.6);
-      });
+    // tool handles sticking out: [colour, x across the basket, length in basket heights, tilt]; they hide while the tools are on the bench
+    if (o.ferramentas) {
+      const cabos = new THREE.Group(); grp.add(cabos); grp.userData.ferramentas = cabos;
+      [['#1e1f22', -0.32, 1.8, 0.3], ['#e2b616', -0.12, 1.5, -0.2], ['#7b8288', 0.06, 1.95, 0.25], ['#1e1f22', 0.22, 2.1, -0.1], ['#e2b616', 0.36, 1.45, 0.15]]
+        .forEach(([k, fx, fh, tilt]) => {
+          const len = h * fh, tool = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, len, 8), material(k, { roughness: 0.5 }));
+          tool.position.set(fx * w, len / 2 + 0.01, (tilt > 0 ? -1 : 1) * d * 0.15); tool.rotation.set(tilt * 0.4, 0, tilt * 0.6); cabos.add(tool);
+        });
+    }
     if (o.etiqueta) etiqueta(grp, o.etiqueta, Math.min(w * 0.4, 0.09), Math.min(h * 0.3, 0.03), 0, h * 0.4, d / 2 + 0.002);
   } else if (o.obj === 'cilindro') {
-    const hb = o.tampa ? h * 0.78 : h;
-    put(new THREE.Mesh(new THREE.CylinderGeometry(w / 2, w / 2, hb, 20), o.transparente ? vidro() : material(o.cor || '#b0b4b8', { metalness: 0.3, roughness: 0.4 })), 0, hb / 2, 0);
+    // built standing; a lying one (a solder sucker) is turned onto its side with the top towards +x
+    const cg = new THREE.Group(); grp.add(cg);
+    const bico = o.tampa ? o.bico : '', topo = !o.tampa ? 0 : bico.startsWith('borrif') ? h * 0.22 : bico ? h * 0.2 : h * 0.12, hb = h - topo;
+    const add = (mesh, y) => { mesh.position.y = y; cg.add(mesh); };
+    add(new THREE.Mesh(new THREE.CylinderGeometry(w / 2, w / 2, hb, 20), o.transparente ? vidro(o.cor) : material(o.cor || '#b0b4b8', { metalness: 0.3, roughness: 0.4 })), hb / 2);
     if (o.tampa) {
       const tm = material(o.tampa, { roughness: 0.4 });
-      put(new THREE.Mesh(new THREE.CylinderGeometry(w * 0.22, w * 0.3, h * 0.14, 14), tm), 0, hb + h * 0.07, 0);
-      put(new THREE.Mesh(new THREE.BoxGeometry(w * 0.3, h * 0.08, w * 0.45), tm), 0, h - h * 0.04, w * 0.12);   // spray head
+      if (bico.startsWith('borrif')) {
+        add(new THREE.Mesh(new THREE.CylinderGeometry(w * 0.22, w * 0.3, h * 0.14, 14), tm), hb + h * 0.07);
+        const cab = new THREE.Mesh(new THREE.BoxGeometry(w * 0.3, h * 0.08, w * 0.45), tm); cab.position.set(0, h - h * 0.04, w * 0.12); cg.add(cab);   // spray head
+      } else if (bico) add(new THREE.Mesh(new THREE.ConeGeometry(w * 0.2, topo, 12), tm), hb + topo / 2);                                    // dropper nozzle
+      else add(new THREE.Mesh(new THREE.CylinderGeometry(w * 0.52, w * 0.52, topo, 20), tm), hb + topo / 2);                                 // flat lid
     }
+    if (o.deitado) { cg.rotation.z = -Math.PI / 2; cg.position.set(-h / 2, w / 2, 0); }
+  } else if (o.obj === 'ferro de solda') {
+    // handle, metal barrel and tip on one axis, lying on the bench; the cable coils behind the handle
+    const r = 0.012, x0 = -w / 2, hl = w * 0.45, bl = w * 0.42, tl = w * 0.13;
+    const cabo = material(o.cor || '#e6c01e', { roughness: 0.5 }), borracha = material(o.cor2 || '#1f2023', { roughness: 0.7 }), aco = metal();
+    const eixo = (rad, len, m, x) => put(new THREE.Mesh(new THREE.CylinderGeometry(rad, rad, len, 14).rotateZ(Math.PI / 2), m), x, r, 0);
+    eixo(r * 0.75, hl * 0.22, borracha, x0 + hl * 0.11);
+    eixo(r, hl * 0.5, cabo, x0 + hl * 0.47);
+    eixo(r * 1.06, hl * 0.28, borracha, x0 + hl * 0.86);
+    eixo(r * 0.42, bl, aco, x0 + hl + bl / 2);
+    put(new THREE.Mesh(new THREE.ConeGeometry(r * 0.32, tl, 10).rotateZ(-Math.PI / 2), aco), x0 + hl + bl + tl / 2, r, 0);
+    const volta = [[0, r, 0], [-0.05, 0.005, 0.03], [-0.02, 0.005, 0.11], [0.1, 0.005, 0.09], [0.06, 0.005, -0.04], [-0.1, 0.005, -0.03], [-0.16, 0.005, 0.06]];
+    put(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(volta.map(([x, y, z]) => new THREE.Vector3(x0 + x, y, z))), 48, 0.0035, 6),
+      material('#151618', { roughness: 0.6 })), 0, 0, 0);
+  } else if (o.obj === 'suporte de ferro') {
+    // base, back tower with the ring that holds the iron, and the tray for the sponge in front
+    const cor = material(o.cor || '#2a3f8f', { roughness: 0.5, metalness: 0.2 }), dd = o.d || w * 1.4;
+    put(box(w, 0.01, dd, cor), 0, 0.005, 0);
+    put(box(w, w * 0.85, dd * 0.38, cor), 0, w * 0.425, -dd * 0.31);
+    put(new THREE.Mesh(new THREE.TorusGeometry(w * 0.22, 0.006, 8, 20), metal()), 0, w * 0.55, -dd * 0.12 + 0.003);
+    put(box(w * 0.86, 0.012, dd * 0.55, metal()), 0, 0.016, dd * 0.2);
+  } else if (o.obj === 'alicate') {
+    // lying flat with the head at +x and the two handles opening in a V towards -x
+    const f = o.forma, corte = f.startsWith('corte'), crimp = f.startsWith('crimp'), desenc = f.startsWith('desenc');
+    const head = w * (corte ? 0.22 : crimp ? 0.32 : 0.36), headW = corte ? 0.018 : crimp ? 0.03 : 0.045, esp = desenc ? 0.02 : 0.013;
+    const hl = w - head, a = desenc ? 0.16 : 0.2, cabeca = material(o.cabeca || '#26282b', { metalness: 0.5, roughness: 0.45 });
+    put(box(head, esp, headW, cabeca), head / 2, esp / 2, 0);
+    if (corte) put(new THREE.Mesh(new THREE.ConeGeometry(headW / 2, head * 0.6, 4).rotateZ(-Math.PI / 2), cabeca), head * 1.3, esp / 2, 0);   // pointed jaws
+    if (crimp) put(box(head * 0.5, esp * 1.1, headW * 0.5, metal()), head * 0.7, esp / 2, 0);                                                 // crimping die
+    [[1, o.cor || '#d8322b'], [-1, o.cor2 || o.cor || '#d8322b']].forEach(([s, k]) => {
+      put(box(hl, esp * 0.9, 0.017, material(k, { roughness: 0.55 })), -hl / 2 * Math.cos(a), esp * 0.45, s * hl / 2 * Math.sin(a)).rotation.y = s * a;
+    });
+  } else if (o.obj === 'pinca') {
+    // a plastic sleeve, long side along z, with the tweezers inside pointing to the front
+    put(new THREE.Mesh(new THREE.BoxGeometry(w, 0.004, d), new THREE.MeshStandardMaterial({ color: new THREE.Color(o.cor || '#e9cf2a'), transparent: true, opacity: 0.75, roughness: 0.3 })), 0, 0.002, 0);
+    const n = Math.max(1, o.quantidade || 1), preta = material('#1f2023', { metalness: 0.5, roughness: 0.4 });
+    for (let i = 0; i < n; i++) put(new THREE.Mesh(new THREE.ConeGeometry(Math.min(0.005, w / n / 3), d * 0.78, 4).rotateX(Math.PI / 2).scale(1, 0.5, 1), preta), -w / 2 + w * (i + 0.5) / n, 0.007, 0);
+  } else if (o.obj === 'carretel') {
+    const fio = material(o.cor || '#c9ccd0', { metalness: 0.8, roughness: 0.3 }), aba = material(o.cor2 || '#3aa05a', { roughness: 0.5 });
+    const disco = (rad, alt, m, y) => put(new THREE.Mesh(new THREE.CylinderGeometry(rad, rad, alt, 24), m), 0, y, 0);
+    disco(w / 2, 0.005, aba, 0.0025); disco(w / 2 * 0.92, h - 0.01, fio, h / 2); disco(w / 2, 0.005, aba, h - 0.0025);
+  } else if (o.obj === 'escova') {
+    put(box(w, 0.006, 0.01, material(o.cor || '#1f2023', { roughness: 0.6 })), 0, 0.003, 0);
+    put(box(w * 0.18, 0.016, 0.013, material('#2b2c2f', { roughness: 0.95 })), w / 2 - w * 0.09, 0.011, 0);   // bristles
+  } else if (o.obj === 'manta') {
+    // silicone mat with a raised rim
+    const m = material(o.cor || '#2e9bd6', { roughness: 0.85 });
+    put(box(w, 0.004, d, m), 0, 0.002, 0);
+    [-1, 1].forEach(s => { put(box(w, 0.006, 0.008, m), 0, 0.003, s * (d / 2 - 0.004)); put(box(0.008, 0.006, d, m), s * (w / 2 - 0.004), 0.003, 0); });
   } else {
     // terceira mão: round brass base with two flexible arms arching over it
     const hb = h * 0.5;
@@ -693,6 +793,8 @@ function applyOpenState(instant) {
     const open = S.view === 'cab' && S.cabId === id;
     v.doors.forEach(dr => { dr.goal = open ? dr.open : 0; if (instant || REDUCED) { dr.cur = dr.goal; dr.pivot.rotation[dr.axis] = dr.cur; } });
     v.slots.forEach((s, code) => { if (s.drawer) { s.goalZ = (open && S.slot === code) ? s.pull : 0; if (instant || REDUCED) s.drawer.position.z = s.goalZ; } });
+    // an open basket spreads its tools on the bench, and its handles stop sticking out of it
+    v.slots.forEach((s, code) => { if (s.mesa) { s.mesa.visible = open && S.slot === code; if (s.ferramentas) s.ferramentas.visible = !s.mesa.visible; } });
     if (v.slide) { v.slide.goal = open ? v.slide.dist : 0; if (instant || REDUCED) { v.slide.cur = v.slide.goal; v.slide.obj.position.z = v.slide.cur; } }
   });
 }
@@ -746,12 +848,28 @@ function goalForCab(c) {
   const needV = (c.h + 0.3) / (2 * tn), needH = (c.w + 0.3) / (2 * tn * aspect);
   return { target, theta: rot + 0.12, phi: c.y > 0 ? 1.5 : 1.43, r: Math.max(needV, needH) + c.d / 2 + doorsOut };
 }
-// A compartment with things inside gets a closer look, so the boxes and the bin labels can be read
+// Where the camera looks inside a unit: an open basket's tools on the bench, a compartment with things inside, or nothing special
+function focoDe(c, code) {
+  if (!camera || !c || !code) return null;
+  const v = cabGroups.get(c.id), s = v && v.slots.get(code);
+  if (s && s.mesa) return 'mesa:' + code;
+  return (c.dentro || {})[baia(code)] ? 'baia:' + baia(code) : null;
+}
+// A compartment with things inside gets a closer look, so the boxes and the bin labels can be read;
+// an open basket gets a view from above of the bench where its tools are laid out
 function goalForBay(c, code) {
-  if (!camera || !c || !code || !(c.dentro || {})[baia(code)]) return null;
-  const v = cabGroups.get(c.id), s = v && v.slots.get(baia(code)); if (!s) return null;
+  const foco = focoDe(c, code); if (!foco) return null;
+  const v = cabGroups.get(c.id), tn = Math.tan(camera.fov * Math.PI / 360), rot = (c.rot || 0) * Math.PI / 180;
+  if (foco.startsWith('mesa:')) {
+    v.group.updateMatrixWorld(true);
+    const caixa = new THREE.Box3().setFromObject(v.slots.get(code).mesa), size = caixa.getSize(new THREE.Vector3());
+    // seen from above at a slant, the front edge is nearer and looks wider, hence the extra width; on a tall phone
+    // screen the ends may be cropped a little rather than everything shrinking (it can still be turned and zoomed)
+    const r = Math.max((size.x + 0.45) / (2 * tn * Math.max(camera.aspect, 1)), (size.z + 0.2) / (2 * tn)) + 0.1;
+    return { target: caixa.getCenter(new THREE.Vector3()), theta: rot + 0.03, phi: 0.78, r };
+  }
+  const s = v && v.slots.get(baia(code)); if (!s) return null;
   const p = s.mesh.getWorldPosition(new THREE.Vector3()), prm = s.mesh.geometry.parameters;
-  const tn = Math.tan(camera.fov * Math.PI / 360), rot = (c.rot || 0) * Math.PI / 180;
   const r = Math.max((prm.height + 0.2) / (2 * tn), (prm.width + 0.2) / (2 * tn * camera.aspect)) + 0.2;
   return { target: p, theta: rot + 0.06, phi: c.y > 0 ? 1.6 : 1.3, r };
 }
@@ -889,14 +1007,19 @@ function placeLabels() {
       // bins get labels while their compartment is selected (or under the mouse), and then the compartment's own label steps aside
       if (s.parent ? s.parent !== aberta && code !== sobre : code === aberta && v.comCaixinhas.has(code)) return;
       const n = itemsIn(c.id, code).length;
-      const nome = s.parent ? code.split('-')[1] : code;
+      const nome = s.tipo === 'cesto' ? 'Cesto' : s.parent ? code.split('-')[1] : code;
       // drawer labels follow the drawer out; box labels live in the part that slides out from under the bench
       const p = s.lbl.clone(); if (s.drawer) p.z += s.drawer.position.z;
       (s.drawer ? v.group : s.mesh.parent).localToWorld(p);
       want.set('s' + code, { cls: 'lbl' + (s.parent ? ' bin' : '') + (n ? ' full' : '') + (S.slot === code ? ' on' : ''), html: esc(nome) + (n ? ' · <span class="n">' + n + '</span>' : ''), pos: p });
+      // the tools of an open basket, named on the bench
+      if (s.mesa && s.mesa.visible) s.mesa.children.forEach((o, i) => {
+        if (o.userData.rotulo) want.set('m' + code + i, { cls: 'lbl bin', html: esc(o.userData.rotulo.texto), pos: s.mesa.localToWorld(o.userData.rotulo.pos.clone()) });
+      });
     });
   }
   labelEls.forEach((el, k) => { if (!want.has(k)) { el.remove(); labelEls.delete(k); } });
+  const ocupados = [];
   want.forEach((w, k) => {
     let el = labelEls.get(k);
     if (!el) { el = document.createElement('div'); host.appendChild(el); labelEls.set(k, el); }
@@ -905,7 +1028,18 @@ function placeLabels() {
     const p = w.pos.clone().project(camera);
     const vis = p.z < 1 && p.x > -1.1 && p.x < 1.1 && p.y > -1.1 && p.y < 1.1;
     el.hidden = !vis;
-    if (vis) el.style.transform = `translate(${((p.x + 1) / 2 * r.width).toFixed(1)}px, ${((1 - p.y) / 2 * r.height).toFixed(1)}px) translate(-50%,-50%)`;
+    if (!vis) return;
+    const x = (p.x + 1) / 2 * r.width;
+    let y = (1 - p.y) / 2 * r.height;
+    // the tools on the bench lie close together: a label that would cover another one moves up or down a little,
+    // and one with no free spot nearby stays hidden (the list in the panel has every name)
+    if (k[0] === 'm') {
+      const lw = el.offsetWidth, lh = el.offsetHeight, bate = () => ocupados.some(b => Math.abs(b.x - x) < (b.w + lw) / 2 && Math.abs(b.y - y) < (b.h + lh) / 2);
+      for (let t = 0; t < 6 && bate(); t++) y += (t % 2 ? -1 : 1) * (t + 1) * lh * 0.6;
+      if (bate()) { el.hidden = true; return; }
+      ocupados.push({ x, y, w: lw, h: lh });
+    }
+    el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) translate(-50%,-50%)`;
   });
 }
 
@@ -930,18 +1064,22 @@ function openCab(id, slot) {
   S.view = 'cab'; S.cabId = id; S.slot = slot || null;
   camLimits = { rMin: 0.4, rMax: 8, phiMin: 0.3, phiMax: 1.62 };
   if (camera) flyTo(goalForBay(c, S.slot) || goalForCab(c));
-  applyOpenState(); paintSlots(); renderSheet(); renderCrumbs(); setHash();
-  $('#hint').textContent = c.forma === 'caixa' ? 'Clique num compartimento para ver o que tem nele' : 'Clique numa gaveta ou prateleira para ver o que tem nela';
+  applyOpenState(); paintSlots(); renderSheet(); renderCrumbs(); setHash(); dicaCab(c);
   // "Fechar armário", "Fechar gaveteiro", "Fechar maleta"…: o nome sai da primeira palavra do tipo
   $('#closeCab span').textContent = 'Fechar ' + c.tipo.split(' ')[0].toLowerCase();
   $('#closeCab').hidden = false;
 }
+function dicaCab(c) {
+  $('#hint').textContent = focoDe(c, S.slot) === 'mesa:' + S.slot ? 'As coisas do cesto estão na bancada. Clique no cesto de novo para guardar.'
+    : c.forma === 'caixa' ? 'Clique num compartimento para ver o que tem nele' : 'Clique numa gaveta ou prateleira para ver o que tem nela';
+}
 function openSlot(code) {
-  const c = cabById(S.cabId), antes = goalForBay(c, S.slot) ? baia(S.slot) : null;
+  const c = cabById(S.cabId), antes = focoDe(c, S.slot);
   S.slot = S.slot === code ? null : code;
-  // the camera moves only when going into or out of a compartment that has things inside
-  const depois = goalForBay(c, S.slot) ? baia(S.slot) : null;
+  // the camera moves only when going into or out of a compartment that has things inside, or to an open basket's tools
+  const depois = focoDe(c, S.slot);
   if (antes !== depois) flyTo(goalForBay(c, S.slot) || goalForCab(c));
+  dicaCab(c);
   applyOpenState(); paintSlots(); renderSheet(); renderCrumbs(); setHash();
 }
 $('#resetView').addEventListener('click', () => {
@@ -1013,10 +1151,15 @@ function binWall(c, bay) {
         '<span class="et' + (b.etiqueta ? '' : ' none') + '">' + esc(b.etiqueta || 'sem etiqueta') + '</span></button>';
     }).join('') + '</div>').join('') + '</div></div>';
 }
-// What the model shows inside a compartment, so it is useful even before the stock sheet lists it
+// What the model shows inside a compartment, so it is useful even before the stock sheet lists it; a basket opens from here
 function noModelo(c, bay) {
-  const nomes = ((c.dentro || {})[bay] || []).filter(o => o.obj !== 'caixinhas' && o.nome).map(o => o.nome);
-  return nomes.length ? '<div><h3 style="margin-bottom:6px">Aparece no modelo</h3><ul class="seen small">' + nomes.map(n => '<li>' + esc(n) + '</li>').join('') + '</ul></div>' : '';
+  const linhas = recipientes(c, bay).filter(r => !r.colunas && r.o.nome).map(r => '<li>' + (r.cesto
+    ? '<button type="button" data-slot="' + esc(r.cesto.code) + '">' + esc(r.o.nome) + '</button> <span class="muted">' + esc(r.cesto.code) + ', clique para abrir</span>'
+    : esc(r.o.nome)) + '</li>');
+  return linhas.length ? '<div><h3 style="margin-bottom:6px">Aparece no modelo</h3><ul class="seen small">' + linhas.join('') + '</ul></div>' : '';
+}
+function naBancada(nomes) {
+  return nomes.length ? '<div><h3 style="margin-bottom:6px">Na bancada, pela foto</h3><ul class="seen small">' + nomes.map(n => '<li>' + esc(n) + '</li>').join('') + '</ul></div>' : '';
 }
 
 // Aviso de quando o estoque ainda não foi lido. Os móveis aparecem de qualquer jeito, porque vêm do site.
@@ -1063,8 +1206,10 @@ function renderSheet() {
   const sl = slotsOf(c);
   const codes = new Set(sl.map(s => s.code));
   const loose = itemsIn(c.id).filter(i => !codes.has(i.local));
-  const nBins = sl.filter(s => s.parent).length;
-  let html = '<div><h2>' + esc(cabName(c)) + '</h2><p class="small muted">' + esc(c.tipo) + ' · ' + (sl.length - nBins) + ' compartimentos' + (nBins ? ' e ' + nBins + ' caixinhas' : '') + (S.loaded ? ' · ' + itensTxt(itemsIn(c.id).length) : '') + '</p></div>';
+  const nBins = sl.filter(s => s.tipo === 'caixinha').length, nCestos = sl.filter(s => s.tipo === 'cesto').length;
+  const extras = [nBins && nBins + (nBins === 1 ? ' caixinha' : ' caixinhas'), nCestos && nCestos + (nCestos === 1 ? ' cesto' : ' cestos')].filter(Boolean);
+  let html = '<div><h2>' + esc(cabName(c)) + '</h2><p class="small muted">' + esc(c.tipo) + ' · ' + sl.filter(s => !s.parent).length + ' compartimentos' +
+    (extras.length ? ', ' + extras.join(' e ') : '') + (S.loaded ? ' · ' + itensTxt(itemsIn(c.id).length) : '') + '</p></div>';
   html += avisoEstoque();
   html += '<div><h3 style="margin-bottom:8px">' + (c.forma === 'caixa' ? 'Vista de cima, do fundo para a frente' : 'Frente do móvel') + '</h3>' + frontGrid(c) + '</div>';
 
@@ -1073,7 +1218,8 @@ function renderSheet() {
     const list = itemsIn(c.id, S.slot).sort((a, b) => String(a.item).localeCompare(String(b.item), 'pt'));
     html += binWall(c, baia(S.slot));
     html += '<div style="display:grid;gap:10px"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span class="code">' + esc(fullCode(c, S.slot)) + '</span><b>' + esc(s ? s.label : S.slot) + '</b></div>';
-    if (s && s.parent) html += '<p class="small muted">' + (s.etiqueta ? 'Etiqueta: <b>' + esc(s.etiqueta) + '</b>' : 'A etiqueta desta caixinha ainda não está no modelo.') + '</p>';
+    if (s && s.tipo === 'cesto') html += naBancada(s.conteudo);
+    else if (s && s.parent) html += '<p class="small muted">' + (s.etiqueta ? 'Etiqueta: <b>' + esc(s.etiqueta) + '</b>' : 'A etiqueta desta caixinha ainda não está no modelo.') + '</p>';
     else html += noModelo(c, S.slot);
     if (!S.loaded) html += '<div class="empty"><span>Ainda não consegui ler o estoque, então não sei o que tem aqui.</span></div>';
     else if (!list.length) html += '<div class="empty"><span>Nada cadastrado aqui ainda.</span><span class="small">Para cadastrar, escreva na aba Estoque da planilha: Armário <b>' + esc(c.id) + '</b> e Local no armário <b>' + esc(S.slot) + '</b>.</span></div>';
@@ -1103,9 +1249,14 @@ $('#q').addEventListener('input', () => {
   // the model itself answers too: bin labels and the things drawn inside the compartments
   const modelo = new Map();
   S.cabs.forEach(c => {
-    slotsOf(c).forEach(s => { if (s.etiqueta && norm(s.etiqueta).includes(q)) modelo.set(s.code + s.etiqueta, { c, code: s.code, nome: s.etiqueta, onde: 'etiqueta da caixinha' }); });
-    Object.keys(c.dentro || {}).forEach(code => c.dentro[code].forEach(o => {
-      if (o.nome && norm(o.nome + ' ' + o.texto).includes(q)) modelo.set(code + o.nome, { c, code, nome: o.nome, onde: 'no modelo' });
+    slotsOf(c).forEach(s => {
+      if (s.tipo === 'caixinha' && s.etiqueta && norm(s.etiqueta).includes(q)) modelo.set(s.code + s.etiqueta, { c, code: s.code, nome: s.etiqueta, onde: 'etiqueta da caixinha' });
+      (s.conteudo || []).forEach(n => { if (norm(n).includes(q)) modelo.set(s.code + n, { c, code: s.code, nome: n, onde: 'no ' + s.short.toLowerCase() }); });
+    });
+    // what is drawn inside the compartments; a basket opens as its own compartment
+    Object.keys(c.dentro || {}).forEach(code => recipientes(c, code).forEach(r => {
+      const o = r.o, alvo = r.cesto ? r.cesto.code : code;
+      if (o.nome && norm(o.nome + ' ' + o.texto + ' ' + o.etiqueta).includes(q)) modelo.set(alvo + o.nome, { c, code: alvo, nome: o.nome, onde: 'no modelo' });
     }));
   });
   const doModelo = [...modelo.values()].slice(0, 20);
