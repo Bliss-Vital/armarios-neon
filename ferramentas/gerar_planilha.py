@@ -7,6 +7,7 @@ Uso: python gerar_planilha.py saida.xlsx URL_DO_SITE
 """
 import json
 import pathlib
+import re
 import sys
 import unicodedata
 
@@ -38,10 +39,13 @@ def ler_laboratorio():
     return json.loads(texto[ini:texto.rindex("}") + 1])
 
 
-# Mesmos códigos que o site calcula em slotsOf(): P, G e C contados de cima para baixo, uma letra por divisão
+# Mesmos códigos que o site calcula em slotsOf(): P, G ou C, o número do móvel e uma letra contada de cima para
+# baixo e da esquerda para a direita (P3A, P3B…). Móvel com um só compartimento daquele tipo fica sem letra (C9).
+# Caixinhas dentro de um compartimento ganham um número: P3C-1, P3C-2…
 PREFIXO = {"prateleira": "P", "gaveta": "G", "compartimento": "C"}
 NOME = {"prateleira": "Prateleira ", "gaveta": "Gaveta ", "compartimento": "Compartimento "}
 LADOS = {2: ["esquerda", "direita"], 3: ["esquerda", "meio", "direita"]}
+LETRAS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 
 def tipo_nivel(s):
@@ -51,18 +55,33 @@ def tipo_nivel(s):
 
 def codigos(movel):
     caixa = any(p in norm(movel.get("tipo")) for p in ("caixa", "maleta"))
-    cont = {k: 0 for k in PREFIXO}
-    for nivel in movel.get("niveis") or [{"tipo": "Compartimento" if caixa else "Prateleira"}]:
+    numero = str(int(re.search(r"\d+", movel["armario"]).group()))
+    dentro = {k.upper().replace(" ", ""): v for k, v in (movel.get("dentro") or {}).items()}
+    niveis = movel.get("niveis") or [{"tipo": "Compartimento" if caixa else "Prateleira"}]
+    divs = [max(1, min(6, int(round(float(n.get("divisoes") or 1))))) for n in niveis]
+    total = {}
+    for nivel, div in zip(niveis, divs):
+        total[tipo_nivel(nivel.get("tipo"))] = total.get(tipo_nivel(nivel.get("tipo")), 0) + div
+    nivel_n, cont = {k: 0 for k in PREFIXO}, {k: 0 for k in PREFIXO}
+    for nivel, div in zip(niveis, divs):
         tipo = tipo_nivel(nivel.get("tipo"))
-        cont[tipo] += 1
-        n, div = cont[tipo], max(1, min(6, int(round(float(nivel.get("divisoes") or 1)))))
-        base = nivel.get("nome") or NOME[tipo] + str(n)
+        nivel_n[tipo] += 1
+        base = nivel.get("nome") or NOME[tipo] + str(nivel_n[tipo])
         for c in range(div):
-            if div == 1:
-                yield PREFIXO[tipo] + str(n), base
-            else:
-                lado = LADOS[div][c] if div in LADOS and not caixa else "divisão " + "ABCDEF"[c]
-                yield PREFIXO[tipo] + str(n) + "ABCDEF"[c], base + ", " + lado
+            codigo = PREFIXO[tipo] + numero + (LETRAS[cont[tipo]] if total[tipo] > 1 else "")
+            cont[tipo] += 1
+            desc = base if div == 1 else base + ", " + (LADOS[div][c] if div in LADOS and not caixa else "divisão " + str(c + 1))
+            yield codigo, desc
+            k = 0
+            for obj in dentro.get(codigo, []):
+                if not norm(obj.get("objeto")).startswith("caixinhas"):
+                    continue
+                for coluna in obj.get("colunas") or []:
+                    for etiqueta in coluna:
+                        if etiqueta is None:
+                            continue
+                        k += 1
+                        yield f"{codigo}-{k}", f"{desc} · caixinha {k}" + (f" ({etiqueta})" if etiqueta else "")
 
 
 LAB = ler_laboratorio()
@@ -76,18 +95,38 @@ CATEGORIAS = ["ESC", "Motores", "Baterias", "Carregadores", "Conectores", "Fios 
 ESTADOS = ["Novo", "Usado (funcionando)", "Não testado", "Com defeito"]
 UNIDADES = ["un", "par", "m", "kit", "rolo", "pacote", "caixa"]
 
-# O que deu para ver na foto da maleta preta em 26/10/2026. Fica marcado para alguém conferir no laboratório.
+# O que deu para ver nas fotos de 26/10/2026 (maleta preta e Armário 3). Fica marcado para alguém conferir no laboratório.
 FOTO = "Cadastrado pela foto de 26/10/2026. Conferir no laboratório."
+ETIQUETA = "Pela etiqueta da caixinha, na foto de 26/10/2026. Conferir no laboratório."
 ITENS_DAS_FOTOS = [
-    ["Maleta 12", "C1A", "Eletrônica", "Motores", "Motor brushless", "1 laranja e 3 pretos, com fios", 4, "un", "", "", "", FOTO],
-    ["Maleta 12", "C1B", "Eletrônica", "Motores", "Motor brushless", "1 azul pequeno e outros pretos, com fios", 4, "un", "", "", "", FOTO + " Confira a quantidade."],
-    ["Maleta 12", "C1C", "Eletrônica", "Rádio e receptor", "Receptor Radiolink", "Com o manual dos receptores de superfície", 1, "un", "", "", "", FOTO],
-    ["Maleta 12", "C1C", "Eletrônica", "Rádio e receptor", "Receptor DSMX", "S603", 1, "un", "", "", "", FOTO],
-    ["Maleta 12", "C1D", "", "Outros", "Saquinhos com peças pequenas", "", None, "", "", "", "", FOTO + " Veja o que tem dentro."],
-    ["Maleta 12", "C2", "Eletrônica", "Motores", "Motor F2004 Ultralight", "Na caixa", 2, "un", "", "", "", FOTO],
-    ["Maleta 12", "C2", "Eletrônica", "Motores", "Motor brushless vermelho", "Com conectores bala dourados", 1, "un", "", "", "", FOTO],
-    ["Maleta 12", "C2", "Eletrônica", "Motores", "Motor pequeno em suporte de MDF", "Com cabo de 3 fios", 1, "un", "", "", "", FOTO],
-    ["Maleta 12", "C2", "Eletrônica", "Baterias", "Pilha AA alcalina", "i-Tech, 2 cartelas de 4", 8, "un", "Novo", "", "", FOTO],
+    ["Maleta 12", "C12A", "Eletrônica", "Motores", "Motor brushless", "1 laranja e 3 pretos, com fios", 4, "un", "", "", "", FOTO],
+    ["Maleta 12", "C12B", "Eletrônica", "Motores", "Motor brushless", "1 azul pequeno e outros pretos, com fios", 4, "un", "", "", "", FOTO + " Confira a quantidade."],
+    ["Maleta 12", "C12C", "Eletrônica", "Rádio e receptor", "Receptor Radiolink", "Com o manual dos receptores de superfície", 1, "un", "", "", "", FOTO],
+    ["Maleta 12", "C12C", "Eletrônica", "Rádio e receptor", "Receptor DSMX", "S603", 1, "un", "", "", "", FOTO],
+    ["Maleta 12", "C12D", "", "Outros", "Saquinhos com peças pequenas", "", None, "", "", "", "", FOTO + " Veja o que tem dentro."],
+    ["Maleta 12", "C12E", "Eletrônica", "Motores", "Motor F2004 Ultralight", "Na caixa", 2, "un", "", "", "", FOTO],
+    ["Maleta 12", "C12E", "Eletrônica", "Motores", "Motor brushless vermelho", "Com conectores bala dourados", 1, "un", "", "", "", FOTO],
+    ["Maleta 12", "C12E", "Eletrônica", "Motores", "Motor pequeno em suporte de MDF", "Com cabo de 3 fios", 1, "un", "", "", "", FOTO],
+    ["Maleta 12", "C12E", "Eletrônica", "Baterias", "Pilha AA alcalina", "i-Tech, 2 cartelas de 4", 8, "un", "Novo", "", "", FOTO],
+    ["Armário 3", "P3A", "Eletrônica", "Ferramentas", "Estação de retrabalho Yaxun", "Solda e ar quente, na caixa azul", 1, "un", "", "", "", FOTO],
+    ["Armário 3", "P3A", "Eletrônica", "Ferramentas", "Estação de retrabalho SMD Yaxun", "Ar quente, nas caixas pretas", 2, "un", "", "", "", FOTO],
+    ["Armário 3", "P3B", "Eletrônica", "Ferramentas", "Terceira mão com limpador de ponta", "Braços flexíveis e base com lã de latão", 1, "un", "", "", "", FOTO],
+    ["Armário 3", "P3B", "Eletrônica", "Consumíveis", "Termo retrátil", "No organizador transparente", None, "", "", "", "", FOTO],
+    ["Armário 3", "P3B", "Eletrônica", "Ferramentas", "Cesto de solda", "Ferro de solda, alicates e chaves", 1, "un", "", "", "", FOTO + " Veja o que tem dentro."],
+    ["Armário 3", "P3C-3", "", "Consumíveis", "Cola quente", "", None, "", "", "", "", ETIQUETA],
+    ["Armário 3", "P3C-6", "Eletrônica", "Conectores", "Terminais", "", None, "", "", "", "", ETIQUETA],
+    ["Armário 3", "P3C-10", "Eletrônica", "Fios e cabos", "Cabos", "", None, "", "", "", "", ETIQUETA],
+    ["Armário 3", "P3C-11", "Eletrônica", "Placas e controladores", "Arduino", "", None, "", "", "", "", ETIQUETA],
+    ["Armário 3", "P3C-12", "Eletrônica", "Fios e cabos", "Cabo USB do Arduino", "", None, "", "", "", "", ETIQUETA],
+    ["Armário 3", "P3D-1", "", "Consumíveis", "Fita crepe", "", None, "rolo", "", "", "", ETIQUETA],
+    ["Armário 3", "P3D-2", "Eletrônica", "Outros", "Protoboard", "", None, "un", "", "", "", ETIQUETA],
+    ["Armário 3", "P3D-4", "Eletrônica", "Consumíveis", "Fita isolante", "", None, "rolo", "", "", "", ETIQUETA],
+    ["Armário 3", "P3D-8", "Eletrônica", "Baterias", "Pilhas", "", None, "un", "", "", "", ETIQUETA],
+    ["Armário 3", "P3D-10", "Eletrônica", "Fios e cabos", "Jumpers", "", None, "", "", "", "", ETIQUETA],
+    ["Armário 3", "P3D-11", "Eletrônica", "Fios e cabos", "Jumpers", "", None, "", "", "", "", ETIQUETA],
+    ["Armário 3", "P3D-12", "Eletrônica", "Fios e cabos", "Jumpers", "", None, "", "", "", "", ETIQUETA],
+    ["Armário 3", "P3D-13", "Eletrônica", "Fios e cabos", "Jumpers", "", None, "", "", "", "", ETIQUETA],
+    ["Armário 3", "P3D", "", "Consumíveis", "Borrifador", "Líquido transparente", 1, "un", "", "", "", FOTO + " Confira o que tem dentro."],
 ]
 
 
@@ -123,13 +162,13 @@ textos = [
     ("", fonte),
     ("Como cadastrar um item", Font(name=F, size=12, bold=True)),
     ("1. Na aba Estoque, escreva uma linha por item. As colunas Armário e Local no armário dizem onde ele está.", fonte),
-    ("2. Local no armário é o código do compartimento: G1 é a gaveta 1, P2 é a prateleira 2, P2A é o lado esquerdo da prateleira 2 e C1 é o compartimento 1 de uma caixa ou maleta.", fonte),
+    ("2. Local no armário é o código do compartimento. Ele leva o número do móvel: P3A é a primeira prateleira do Armário 3, G6B é a segunda gaveta do Gaveteiro 6, C12A é o primeiro compartimento da Maleta 12 e P3C-1 é a caixinha 1 da P3C.", fonte),
     ("    Os códigos de cada móvel estão na aba Locais. No site, clicar num compartimento também mostra o código dele.", fonte),
     ("3. Em Qtd, escreva só o número (10, não \"10 un\"). A unidade vai na coluna ao lado.", fonte),
     ("4. O site lê a planilha sozinho a cada minuto. Para ver na hora, clique em Atualizar no site.", fonte),
     ("", fonte),
     ("Exemplo de linha na aba Estoque", Font(name=F, size=12, bold=True)),
-    ("Gaveteiro 6  |  G1  |  Eletrônica  |  Conectores  |  XT60 fêmea  |  Amass, original  |  10  |  un  |  Novo  |  (vazio)  |  26/10/2026  |  (vazio)", fonte),
+    ("Gaveteiro 6  |  G6A  |  Eletrônica  |  Conectores  |  XT60 fêmea  |  Amass, original  |  10  |  un  |  Novo  |  (vazio)  |  26/10/2026  |  (vazio)", fonte),
     ("", fonte),
     ("Os móveis do modelo", Font(name=F, size=12, bold=True)),
     ("Os móveis, as medidas e as gavetas de cada um ficam no próprio site, no arquivo laboratorio.js, e não nesta planilha.", fonte),

@@ -83,6 +83,7 @@ a{color:var(--accent)}
 .lbl.cab small{display:block;font:500 11px/1.2 var(--f-body);color:var(--muted);margin-top:3px}
 .lbl.cab.on{z-index:2;border-color:var(--accent)}
 .lbl .n{color:var(--accent)}
+.lbl.bin{font-size:11px;padding:2px 5px}
 .lbl.full{background:var(--accent);color:var(--accent-ink);border-color:transparent}
 .lbl.full .n{color:inherit}
 .lbl.on{outline:2px solid var(--sel);outline-offset:1px}
@@ -90,6 +91,10 @@ a{color:var(--accent)}
   border:1px solid var(--border);border-radius:6px;padding:5px 9px;pointer-events:none;max-width:calc(100% - 140px)}
 .view-btns{position:absolute;right:12px;bottom:12px;display:flex;gap:6px}
 .view-btns button{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;cursor:pointer}
+.close-cab{position:absolute;top:12px;right:12px;z-index:5;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;
+  border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:14px;cursor:pointer;box-shadow:0 2px 8px rgb(0 0 0 / .2)}
+.close-cab:hover{filter:brightness(1.06)}
+.close-cab svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round}
 
 .sheet{border-left:1px solid var(--border);background:var(--surface);min-height:0;overflow:auto;
   padding-block:16px;padding-left:16px;padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:16px}
@@ -117,6 +122,14 @@ a{color:var(--accent)}
 .front button.has .c{color:var(--accent);font-weight:700}
 .front button.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .front button.on .c{color:inherit}
+.bins{display:flex;gap:4px;background:var(--plastic);border-color:var(--plastic)}
+.bins .bcol{flex:1 1 0;display:flex;flex-direction:column;gap:4px;min-width:0}
+.bins .gap{flex:1 1 0}
+.bins button{flex:1 1 0;min-height:0;flex-direction:column;align-items:stretch;justify-content:center;gap:3px;overflow:hidden}
+.bins button .r1{display:flex;justify-content:space-between;gap:4px}
+.bins button .et{font:500 11px/1.2 var(--f-body);text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bins button .et.none{color:var(--muted)}
+.seen{margin:0;padding-left:18px;display:grid;gap:2px}
 
 .items{display:grid;gap:8px;margin:0;padding:0;list-style:none}
 .item{border:1px solid var(--border);border-radius:8px;padding:10px 12px;background:var(--bg);display:grid;gap:4px}
@@ -143,7 +156,7 @@ a{color:var(--accent)}
 .steps{margin:0;padding-left:20px;display:grid;gap:4px}
 
 @media (max-width:820px){
-  .app{grid-template-columns:1fr;grid-template-rows:auto 56vh auto;height:auto;min-height:100%}
+  .app{grid-template-columns:minmax(0,1fr);grid-template-rows:auto 56vh auto;height:auto;min-height:100%}
   html,body{height:auto}
   .sheet{border-left:0;border-top:1px solid var(--border);overflow:visible;padding-left:max(16px,env(safe-area-inset-left,0px))}
   .search{width:100%;margin-left:0}
@@ -167,6 +180,7 @@ a{color:var(--accent)}
     <canvas id="scene" aria-label="Modelo 3D dos armários do laboratório"></canvas>
     <div class="labels" id="labels"></div>
     <div class="hint" id="hint">Arraste para girar · role para aproximar · clique num armário</div>
+    <button class="close-cab" id="closeCab" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg><span>Fechar armário</span></button>
     <div class="view-btns"><button id="resetView" type="button">Centralizar</button></div>
   </main>
 
@@ -188,7 +202,7 @@ const ATUALIZA_MS = 60 * 1000;
 
 // ---------- state ----------
 const S = {
-  cabs: [],            // [{id, key, numero, nome, tipo, forma, rodinhas, maleta, x, y, z, rot, w, h, d, niveis:[{tipo, div, tam, nome}]}]
+  cabs: [],            // [{id, key, numero, nome, tipo, forma, rodinhas, maleta, x, y, z, rot, w, h, d, niveis:[{tipo, div, tam, nome}], dentro:{code:[objeto]}}]
   bancadas: [],        // [{nome, x, z, rot, w, h, d, escuro}]
   items: [],           // [{id, cab, armario, local, item, espec, qtd, unid, classificacao, categoria, estado, origem, obs, conferido}]
   loaded: false,       // o estoque já foi lido pelo menos uma vez
@@ -197,7 +211,7 @@ const S = {
   itemsSig: '',
   view: 'lab',        // 'lab' | 'cab'
   cabId: null,
-  slot: null,          // compartment code inside the open cabinet, e.g. "G1", "P2B" or "C1A"
+  slot: null,          // compartment code inside the open cabinet, e.g. "G6A", "P3B", "C12A" or the bin "P3D-4"
 };
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const $ = s => document.querySelector(s);
@@ -206,32 +220,66 @@ const norm = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLow
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const txt = v => String(v ?? '').trim();
 const num = (v, d) => { if (typeof v === 'number') return v; const n = parseFloat(String(v ?? '').replace(',', '.')); return isFinite(n) ? n : d; };
-const LETTERS = 'ABCDEFGHIJ';
+const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const LADOS = { 2: ['esquerda', 'direita'], 3: ['esquerda', 'meio', 'direita'] };
 
-// Compartment codes: shelves are P1, P2…, drawers G1, G2… and box compartments C1, C2…, each type counted
-// top to bottom (back to front in a box); a level split into columns adds a letter (P2A, P2B).
+// Compartment codes carry the unit's number, so each one is unique in the lab: P for shelves, G for drawers and
+// C for box compartments, then the unit number and a letter counted in reading order, top to bottom and left to
+// right (back to front in a box). Armário 3 has P3A, P3B, P3C and P3D; a unit with a single one has no letter (C9).
+// Bins stacked inside a compartment add a number: P3C-1, P3C-2…
 const PREFIXO = { prateleira: 'P', gaveta: 'G', compartimento: 'C' };
 const NOME_NIVEL = { prateleira: 'Prateleira ', gaveta: 'Gaveta ', compartimento: 'Compartimento ' };
 function slotsOf(cab) {
-  const out = [], cont = { prateleira: 0, gaveta: 0, compartimento: 0 };
+  const out = [], niveis = { prateleira: 0, gaveta: 0, compartimento: 0 }, cont = { prateleira: 0, gaveta: 0, compartimento: 0 }, total = {};
+  (cab.niveis || []).forEach(lv => { total[lv.tipo] = (total[lv.tipo] || 0) + lv.div; });
   (cab.niveis || []).forEach((lv, li) => {
-    const n = ++cont[lv.tipo], pre = PREFIXO[lv.tipo] + n, base = lv.nome || NOME_NIVEL[lv.tipo] + n;
-    for (let c = 0; c < lv.div; c++) out.push({ code: lv.div > 1 ? pre + LETTERS[c] : pre, level: li, col: c, div: lv.div, tipo: lv.tipo,
-      label: base + (lv.div > 1 ? ', ' + (LADOS[lv.div] && cab.forma !== 'caixa' ? LADOS[lv.div][c] : 'divisão ' + LETTERS[c]) : '') });
+    const n = ++niveis[lv.tipo], base = lv.nome || NOME_NIVEL[lv.tipo] + n;
+    for (let c = 0; c < lv.div; c++) {
+      const k = cont[lv.tipo]++;
+      const code = PREFIXO[lv.tipo] + cab.numero + (total[lv.tipo] > 1 ? LETTERS[k] : '');
+      const label = base + (lv.div > 1 ? ', ' + (LADOS[lv.div] && cab.forma !== 'caixa' ? LADOS[lv.div][c] : 'divisão ' + (c + 1)) : '');
+      out.push({ code, level: li, col: c, div: lv.div, tipo: lv.tipo, label });
+      caixinhas(cab, code).forEach(g => g.colunas.forEach(col => col.forEach(b => {
+        if (b) out.push({ code: b.code, parent: code, level: li, col: c, tipo: 'caixinha', etiqueta: b.etiqueta, short: 'Caixinha ' + b.n, label: label + ' · caixinha ' + b.n });
+      })));
+    }
   });
   return out;
 }
+// Caixinhas empilhadas num compartimento, numeradas coluna por coluna (da esquerda), de cima para baixo
+function caixinhas(cab, bay) {
+  let k = 0;
+  return ((cab.dentro || {})[bay] || []).filter(o => o.obj === 'caixinhas')
+    .map(o => ({ o, colunas: o.colunas.map(col => col.map(et => et === null ? null : { code: bay + '-' + (++k), n: k, etiqueta: et })) }));
+}
+const baia = code => String(code || '').split('-')[0];
 const cabById = id => S.cabs.find(c => c.id === id);
-const itemsIn = (cabId, code) => S.items.filter(i => i.cab === cabId && (code == null || i.local === code));
+// a compartment's items include the ones in its bins
+const itemsIn = (cabId, code) => S.items.filter(i => i.cab === cabId && (code == null || i.local === code || i.local.startsWith(code + '-')));
 const cabName = c => c.nome ? c.id + ' · ' + c.nome : c.id;
-const fullCode = (c, code) => 'A' + c.numero + (code ? '-' + code : '');
+// the compartment code already names the unit; a unit on its own is A3
+const fullCode = (c, code) => code || 'A' + c.numero;
 const itensTxt = n => n + (n === 1 ? ' item' : ' itens');
 
 // ---------- móveis (laboratorio.js) ----------
 // "Armário 2", "armario 2", "A2" e "2" apontam para o mesmo móvel
 const chave = s => { const m = /(\d+)/.exec(String(s)); return m ? 'n' + (+m[1]) : norm(s); };
 function tipoNivel(s) { const t = norm(s); return t.startsWith('g') ? 'gaveta' : t.startsWith('c') ? 'compartimento' : 'prateleira'; }
+// O que fica dentro dos compartimentos, só para aparecer no modelo: caixas, cestos, frascos e pilhas de caixinhas
+const OBJETOS = ['caixinhas', 'caixa', 'cesto', 'cilindro', 'terceira mao'];
+const hex = s => /^#[0-9a-f]{3}([0-9a-f]{3})?$/i.test(txt(s)) ? txt(s) : '';
+function lerDentro(d) {
+  const out = {};
+  Object.keys(d || {}).forEach(code => {
+    out[code.toUpperCase().replace(/\s+/g, '')] = [].concat(d[code] || []).map(o => ({
+      obj: OBJETOS.find(k => norm(o.objeto).startsWith(k)) || 'caixa', nome: txt(o.nome), texto: txt(o.texto), etiqueta: txt(o.etiqueta),
+      cor: hex(o.cor), tampa: hex(o.tampa), transparente: !!o.transparente, ferramentas: !!o.ferramentas,
+      cores: [].concat(o.cores || []).map(hex).filter(Boolean),
+      w: num(o.largura, 0), h: num(o.altura, 0), d: num(o.fundo, 0), x: num(o.x, 0), y: num(o.y, 0), recuo: num(o.recuo, 0),
+      colunas: [].concat(o.colunas || []).map(col => [].concat(col || []).map(e => e === null ? null : txt(e))) }));
+  });
+  return out;
+}
 function montarLab(lab) {
   const cabs = (lab.armarios || []).filter(a => txt(a.armario)).map(a => {
     const id = txt(a.armario), m = /(\d+)/.exec(id), t = norm(a.tipo);
@@ -244,7 +292,8 @@ function montarLab(lab) {
       rodinhas: /volante|rodinha/.test(t), maleta: t.includes('maleta'),
       w: clamp(num(a.largura, 0.9), 0.15, 3), h: clamp(num(a.altura, 1.9), 0.08, 3), d: clamp(num(a.fundo, 0.45), 0.1, 1.5),
       x: num(a.x, 0), z: num(a.z, 0), y: Math.max(0, num(a.altura_do_chao, 0)), rot: num(a.giro, 0),
-      niveis: niveis.length ? niveis : [{ tipo: forma === 'caixa' ? 'compartimento' : 'prateleira', div: 1, tam: 1, nome: '' }] };
+      niveis: niveis.length ? niveis : [{ tipo: forma === 'caixa' ? 'compartimento' : 'prateleira', div: 1, tam: 1, nome: '' }],
+      dentro: lerDentro(a.dentro) };
   }).sort((a, b) => (+a.numero || 0) - (+b.numero || 0));
   const bancadas = (lab.bancadas || []).map(b => ({ nome: txt(b.nome),
     w: clamp(num(b.comprimento, 2), 0.3, 20), d: clamp(num(b.fundo, 0.7), 0.2, 3), h: clamp(num(b.altura, 0.9), 0.4, 1.5),
@@ -372,7 +421,8 @@ function buildCabinet(c, M) {
   const glow = [];
   g.traverse(o => { if (!o.isMesh) return; if (!o.userData.cabId) o.userData.cabId = c.id; if (o.material.emissive) glow.push(o.material); });
   scene.add(g);
-  return Object.assign({ group: g, glow: [...new Set(glow)] }, parts);
+  const comCaixinhas = new Set([...parts.slots.values()].filter(s => s.parent).map(s => s.parent));
+  return Object.assign({ group: g, glow: [...new Set(glow)], comCaixinhas }, parts);
 }
 
 // Armário, armário de parede e gaveteiro: caixa de laminado com portas na frente das prateleiras
@@ -402,7 +452,7 @@ function buildFurniture(c, M, g) {
   const innerTop = h - t, innerBot = base + t, innerW = w - 2 * t;
   const sum = lv.reduce((a, l) => a + l.tam, 0) || 1;
   const frontZ = temPortas ? d / 2 - 0.035 : d / 2 + 0.01;  // drawer fronts sit behind the doors, or flush in a drawer unit
-  const slots = new Map(), codes = slotsOf(c);
+  const slots = new Map(), codes = slotsOf(c).filter(s => !s.parent);   // bins are built with their compartment
   let y = innerTop;
   lv.forEach((l, li) => {
     const lh = (innerTop - innerBot) * l.tam / sum;
@@ -431,10 +481,14 @@ function buildFurniture(c, M, g) {
         mesh = new THREE.Mesh(new THREE.BoxGeometry(cw - 0.03, lh - 0.03, d - 0.08), hitMat());
         mesh.position.set(cx, cy + 0.008, 0.01);
         mesh.userData = { cabId: c.id, slot: s.code };
+        mesh.userData.cheio = !!(c.dentro || {})[s.code];   // with things inside, the tint stays light so they show through
         g.add(mesh);
         lbl = new THREE.Vector3(cx, cy, d / 2 - 0.05);
       }
       slots.set(s.code, { mesh, drawer, tipo: l.tipo, lbl, goalZ: 0, pull: d * 0.55 });
+      // the free space of the bay: between the dividers, from the shelf below to the one above, from the back to behind the doors
+      if (!drawer) buildDentro(c, s.code, { x0: cx - cw / 2 + (s.col > 0 ? 0.008 : 0), x1: cx + cw / 2 - (s.col < l.div - 1 ? 0.008 : 0),
+        y0: y0 + (li < lv.length - 1 ? 0.015 : 0), y1: y0 + lh, z0: -d / 2 + t, z1: d / 2 - 0.02 }, g, slots, M);
     });
   });
 
@@ -462,6 +516,128 @@ function buildFurniture(c, M, g) {
   return { doors, slots, slide: null };
 }
 
+// ---------- o que tem dentro (laboratorio.js, "dentro") ----------
+const material = (cor, o) => new THREE.MeshStandardMaterial(Object.assign({ color: new THREE.Color(cor), roughness: 0.7 }, o));
+const vidro = () => new THREE.MeshStandardMaterial({ color: 0xdfe8ec, transparent: true, opacity: 0.32, roughness: 0.15, depthWrite: false });
+const tintaPara = cor => new THREE.Color(cor).getHSL({}).l > 0.6 ? '#1d1f22' : '#f4f4f0';
+
+// Texto impresso numa face: a frente de uma caixa de produto ou a etiqueta de uma caixinha. A primeira linha sai maior.
+function textoTex(texto, fundo, tinta, w, h) {
+  const W = 512, H = clamp(Math.round(W * h / w), 48, 1024);
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const x = cv.getContext('2d');
+  x.fillStyle = fundo; x.fillRect(0, 0, W, H);
+  const ls = texto.split('\n'), pesos = ls.map((_, i) => i ? 0.62 : 1), soma = pesos.reduce((a, b) => a + b, 0);
+  const base = Math.min(H * 0.8 / (soma * 1.25), W * 0.28);
+  let y = (H - base * soma * 1.25) / 2;
+  x.fillStyle = tinta; x.textAlign = 'center'; x.textBaseline = 'middle';
+  ls.forEach((l, i) => {
+    let f = base * pesos[i]; const lh = f * 1.25;
+    do { x.font = '700 ' + f + 'px Arial, sans-serif'; f -= 2; } while (f > 8 && x.measureText(l).width > W * 0.9);
+    x.fillText(l, W / 2, y + lh / 2); y += lh;
+  });
+  const t = new THREE.CanvasTexture(cv); t.anisotropy = 4; return t;
+}
+function etiqueta(parent, texto, w, h, x, y, z) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshStandardMaterial({ color: 0xf2f2ee, roughness: 0.9,
+    map: texto ? textoTex(texto, '#f2f2ee', '#1d1f22', w, h) : null }));
+  m.position.set(x, y, z); parent.add(m); return m;
+}
+
+// B is the free space of the bay, in the cabinet's coordinates
+function buildDentro(c, bay, B, g, slots, M) {
+  const objs = (c.dentro || {})[bay]; if (!objs) return;
+  const W = B.x1 - B.x0, H = B.y1 - B.y0, D = B.z1 - B.z0;
+  const grupos = caixinhas(c, bay);
+  let gi = 0;
+  objs.forEach(o => {
+    if (o.obj === 'caixinhas') { buildBins(c, grupos[gi++], B, g, slots, M); return; }
+    const w = clamp(o.w || 0.1, 0.01, W), h = clamp(o.h || 0.1, 0.01, H), d = clamp(o.d || Math.min(w, D), 0.01, D);
+    const obj = buildObjeto(o, w, h, d);
+    obj.position.set(B.x0 + o.x + w / 2, B.y0 + o.y, B.z1 - o.recuo - d / 2);
+    // clicking a thing in the bay selects the bay
+    obj.traverse(m => { if (m.isMesh) { m.userData = { cabId: c.id, slot: bay }; m.castShadow = m.receiveShadow = !m.material.transparent; } });
+    g.add(obj);
+  });
+}
+
+// One thing on a shelf, standing on its base at the origin
+function buildObjeto(o, w, h, d) {
+  const grp = new THREE.Group();
+  const put = (mesh, x, y, z) => { mesh.position.set(x, y, z); grp.add(mesh); return mesh; };
+  if (o.obj === 'caixa') {
+    const cor = o.cor || '#9a7b55';
+    const lado = o.transparente ? vidro() : material(cor, { roughness: 0.8 });
+    const frente = o.texto ? new THREE.MeshStandardMaterial({ map: textoTex(o.texto, cor, tintaPara(cor), w, h), roughness: 0.8 }) : lado;
+    put(new THREE.Mesh(new THREE.BoxGeometry(w, h, d), [lado, lado, lado, lado, frente, lado]), 0, h / 2, 0);
+    // what shows through a transparent box, one layer per colour, top to bottom
+    const n = o.cores.length;
+    o.cores.forEach((k, i) => put(new THREE.Mesh(new THREE.BoxGeometry(w * 0.8, h / n * 0.7, d * 0.8), material(k)), 0, h - h / n * (i + 0.5), 0));
+  } else if (o.obj === 'cesto') {
+    const m = material(o.cor || '#e8c3c7', { roughness: 0.6 }), t = 0.005;
+    put(new THREE.Mesh(new THREE.BoxGeometry(w, t, d), m), 0, t / 2, 0);
+    [-1, 1].forEach(s => {
+      put(new THREE.Mesh(new THREE.BoxGeometry(t, h, d), m), s * (w - t) / 2, h / 2, 0);
+      put(new THREE.Mesh(new THREE.BoxGeometry(w, h, t), m), 0, h / 2, s * (d - t) / 2);
+    });
+    // tool handles sticking out: [colour, x across the basket, length in basket heights, tilt]
+    if (o.ferramentas) [['#1e1f22', -0.32, 1.8, 0.3], ['#e2b616', -0.12, 1.5, -0.2], ['#7b8288', 0.06, 1.95, 0.25], ['#1e1f22', 0.22, 2.1, -0.1], ['#e2b616', 0.36, 1.45, 0.15]]
+      .forEach(([k, fx, fh, tilt]) => {
+        const len = h * fh, tool = put(new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, len, 8), material(k, { roughness: 0.5 })), fx * w, len / 2 + 0.01, (tilt > 0 ? -1 : 1) * d * 0.15);
+        tool.rotation.set(tilt * 0.4, 0, tilt * 0.6);
+      });
+    if (o.etiqueta) etiqueta(grp, o.etiqueta, Math.min(w * 0.4, 0.09), Math.min(h * 0.3, 0.03), 0, h * 0.4, d / 2 + 0.002);
+  } else if (o.obj === 'cilindro') {
+    const hb = o.tampa ? h * 0.78 : h;
+    put(new THREE.Mesh(new THREE.CylinderGeometry(w / 2, w / 2, hb, 20), o.transparente ? vidro() : material(o.cor || '#b0b4b8', { metalness: 0.3, roughness: 0.4 })), 0, hb / 2, 0);
+    if (o.tampa) {
+      const tm = material(o.tampa, { roughness: 0.4 });
+      put(new THREE.Mesh(new THREE.CylinderGeometry(w * 0.22, w * 0.3, h * 0.14, 14), tm), 0, hb + h * 0.07, 0);
+      put(new THREE.Mesh(new THREE.BoxGeometry(w * 0.3, h * 0.08, w * 0.45), tm), 0, h - h * 0.04, w * 0.12);   // spray head
+    }
+  } else {
+    // terceira mão: round brass base with two flexible arms arching over it
+    const hb = h * 0.5;
+    put(new THREE.Mesh(new THREE.CylinderGeometry(w * 0.42, w / 2, hb, 20), material(o.cor || '#b59a45', { metalness: 0.6, roughness: 0.35 })), 0, hb / 2, 0);
+    const braco = material('#272f6b', { roughness: 0.5 });
+    [[h * 0.28, 0.5], [h * 0.2, -0.9]].forEach(([r, ry]) => { put(new THREE.Mesh(new THREE.TorusGeometry(r, 0.007, 8, 24, Math.PI), braco), 0, hb, 0).rotation.y = ry; });
+  }
+  return grp;
+}
+
+// Stack of organiser bins: each bin is a compartment of its own, with the label on its front lip
+function buildBins(c, grupo, B, g, slots, M) {
+  if (!grupo || !grupo.colunas.length) return;
+  const o = grupo.o, livreW = B.x1 - B.x0 - o.x, livreH = B.y1 - B.y0 - o.y;
+  const W = clamp(o.w || livreW, 0.05, livreW), H = clamp(o.h || livreH - 0.01, 0.04, livreH), D = clamp(o.d || 0.24, 0.06, B.z1 - B.z0);
+  const cw = W / grupo.colunas.length, t = 0.004;
+  grupo.colunas.forEach((col, ci) => {
+    const bh = H / col.length;
+    col.forEach((b, ri) => {
+      if (!b) return;
+      const bw = cw - 0.004, hh = bh - 0.004, lip = hh * 0.42;
+      const bin = new THREE.Group();
+      bin.position.set(B.x0 + o.x + cw * (ci + 0.5), B.y0 + o.y + bh * (col.length - 1 - ri), B.z1 - o.recuo - D / 2);
+      const add = (mesh, x, y, z) => { mesh.position.set(x, y, z); mesh.castShadow = mesh.receiveShadow = true; bin.add(mesh); return mesh; };
+      add(new THREE.Mesh(new THREE.BoxGeometry(bw, t, D), M.plastic), 0, t / 2, 0);
+      add(new THREE.Mesh(new THREE.BoxGeometry(bw, hh, t), M.plastic), 0, hh / 2, -D / 2 + t / 2);
+      add(new THREE.Mesh(new THREE.BoxGeometry(bw, lip, t), M.plastic), 0, lip / 2, D / 2 - t / 2);
+      // the sides slope from full height at the back down to the front lip; the shape is drawn in (z, y) and turned onto the x axis
+      const perfil = new THREE.Shape([new THREE.Vector2(-D / 2, 0), new THREE.Vector2(D / 2, 0), new THREE.Vector2(D / 2, lip), new THREE.Vector2(-D / 2 + D * 0.4, hh), new THREE.Vector2(-D / 2, hh)]);
+      const lado = new THREE.ExtrudeGeometry(perfil, { depth: t, bevelEnabled: false }).rotateY(-Math.PI / 2);
+      add(new THREE.Mesh(lado, M.plastic), -bw / 2 + t, 0, 0);
+      add(new THREE.Mesh(lado, M.plastic), bw / 2, 0, 0);
+      etiqueta(bin, b.etiqueta, bw * 0.66, lip * 0.5, 0, lip * 0.5, D / 2 + 0.0015);
+      const hitBox = new THREE.Mesh(new THREE.BoxGeometry(bw, hh, D), hitMat());
+      hitBox.position.set(0, hh / 2, 0); bin.add(hitBox);
+      bin.traverse(m => { if (m.isMesh) m.userData = { cabId: c.id, slot: b.code }; });
+      g.add(bin);
+      // the number label sits on the top left corner of the lip, clear of the label text
+      slots.set(b.code, { mesh: hitBox, drawer: null, tipo: 'caixinha', parent: baia(b.code), lbl: new THREE.Vector3(-bw / 2 + 0.018, lip + 0.008, D / 2) });
+    });
+  });
+}
+
 // Caixa e maleta: base de plástico com tampa; os compartimentos ficam em fileiras, do fundo para a frente
 function buildBox(c, M, g) {
   const { w, h, d } = c, t = 0.012;
@@ -482,7 +658,7 @@ function buildBox(c, M, g) {
 
   const lv = c.niveis, innerW = w - 2 * t, innerD = d - 2 * t, innerH = bh - t;
   const sum = lv.reduce((a, l) => a + l.tam, 0) || 1;
-  const slots = new Map(), codes = slotsOf(c);
+  const slots = new Map(), codes = slotsOf(c).filter(s => !s.parent);   // bins are built with their compartment
   let z = -innerD / 2;
   lv.forEach((l, li) => {
     const rd = innerD * l.tam / sum, z0 = z; z += rd;
@@ -531,7 +707,7 @@ function paintSlots() {
         s.mesh.material.color.copy(on ? col('--sel') : hov ? col('--hl') : col('--body'));
       } else {
         s.mesh.material.color.copy(on ? col('--sel') : col('--hl'));
-        s.mesh.material.opacity = on ? 0.4 : hov ? 0.24 : 0;
+        s.mesh.material.opacity = (on ? 0.4 : hov ? 0.24 : 0) * (s.mesh.userData.cheio ? 0.35 : 1);
       }
     });
     const hl = S.view === 'lab' && hovered && hovered.cabId === id;
@@ -570,6 +746,15 @@ function goalForCab(c) {
   const needV = (c.h + 0.3) / (2 * tn), needH = (c.w + 0.3) / (2 * tn * aspect);
   return { target, theta: rot + 0.12, phi: c.y > 0 ? 1.5 : 1.43, r: Math.max(needV, needH) + c.d / 2 + doorsOut };
 }
+// A compartment with things inside gets a closer look, so the boxes and the bin labels can be read
+function goalForBay(c, code) {
+  if (!camera || !c || !code || !(c.dentro || {})[baia(code)]) return null;
+  const v = cabGroups.get(c.id), s = v && v.slots.get(baia(code)); if (!s) return null;
+  const p = s.mesh.getWorldPosition(new THREE.Vector3()), prm = s.mesh.geometry.parameters;
+  const tn = Math.tan(camera.fov * Math.PI / 360), rot = (c.rot || 0) * Math.PI / 180;
+  const r = Math.max((prm.height + 0.2) / (2 * tn), (prm.width + 0.2) / (2 * tn * camera.aspect)) + 0.2;
+  return { target: p, theta: rot + 0.06, phi: c.y > 0 ? 1.6 : 1.3, r };
+}
 function flyTo(goal) {
   const from = { target: cam.target.clone(), theta: cam.theta, phi: cam.phi, r: cam.r };
   let dt = goal.theta - from.theta; dt = Math.atan2(Math.sin(dt), Math.cos(dt));
@@ -581,10 +766,16 @@ function updateCamera() {
   camera.lookAt(target);
 }
 
-function tick(now) {
+let ultimoQuadro = performance.now();
+function tick() {
   requestAnimationFrame(tick);
+  // same clock as flyTo: the frame timestamp can be older than a click handled in the same frame
+  const agora = performance.now(), dt = Math.min(1, (agora - ultimoQuadro) / 1000);
+  ultimoQuadro = agora;
+  // doors, lids and drawers ease the same at any frame rate: 14% (16% for drawers) of the way every 1/60 s
+  const f = 1 - Math.pow(0.86, dt * 60), fg = 1 - Math.pow(0.84, dt * 60);
   if (anim) {
-    const k = anim.dur ? Math.min(1, (now - anim.t0) / anim.dur) : 1;
+    const k = anim.dur ? clamp((agora - anim.t0) / anim.dur, 0, 1) : 1;
     const e = k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
     cam.target.lerpVectors(anim.from.target, anim.goal.target, e);
     cam.theta = anim.from.theta + (anim.goal.theta - anim.from.theta) * e;
@@ -595,13 +786,13 @@ function tick(now) {
   cabGroups.forEach(v => {
     // a box under a bench slides out first and only then opens its lid; closing goes the other way
     const slid = !v.slide || Math.abs(v.slide.cur - v.slide.goal) < 0.02 || v.slide.goal === 0;
-    v.doors.forEach(dr => { const g = slid ? dr.goal : 0; dr.cur += (g - dr.cur) * 0.14; dr.pivot.rotation[dr.axis] = dr.cur; });
+    v.doors.forEach(dr => { const g = slid ? dr.goal : 0; dr.cur += (g - dr.cur) * f; dr.pivot.rotation[dr.axis] = dr.cur; });
     if (v.slide) {
       const lidShut = v.doors.every(dr => Math.abs(dr.cur) < 0.05);
-      if (v.slide.goal > 0 || lidShut) v.slide.cur += (v.slide.goal - v.slide.cur) * 0.14;
+      if (v.slide.goal > 0 || lidShut) v.slide.cur += (v.slide.goal - v.slide.cur) * f;
       v.slide.obj.position.z = v.slide.cur;
     }
-    v.slots.forEach(s => { if (s.drawer) s.drawer.position.z += ((s.goalZ || 0) - s.drawer.position.z) * 0.16; });
+    v.slots.forEach(s => { if (s.drawer) s.drawer.position.z += ((s.goalZ || 0) - s.drawer.position.z) * fg; });
   });
   updateCamera();
   renderer.render(scene, camera);
@@ -693,12 +884,16 @@ function placeLabels() {
     });
   } else {
     const c = cabById(S.cabId), v = cabGroups.get(S.cabId);
+    const aberta = baia(S.slot), sobre = hovered && hovered.cabId === S.cabId ? hovered.slot : null;
     if (c && v) v.slots.forEach((s, code) => {
+      // bins get labels while their compartment is selected (or under the mouse), and then the compartment's own label steps aside
+      if (s.parent ? s.parent !== aberta && code !== sobre : code === aberta && v.comCaixinhas.has(code)) return;
       const n = itemsIn(c.id, code).length;
+      const nome = s.parent ? code.split('-')[1] : code;
       // drawer labels follow the drawer out; box labels live in the part that slides out from under the bench
       const p = s.lbl.clone(); if (s.drawer) p.z += s.drawer.position.z;
       (s.drawer ? v.group : s.mesh.parent).localToWorld(p);
-      want.set('s' + code, { cls: 'lbl' + (n ? ' full' : '') + (S.slot === code ? ' on' : ''), html: esc(code) + (n ? ' · <span class="n">' + n + '</span>' : ''), pos: p });
+      want.set('s' + code, { cls: 'lbl' + (s.parent ? ' bin' : '') + (n ? ' full' : '') + (S.slot === code ? ' on' : ''), html: esc(nome) + (n ? ' · <span class="n">' + n + '</span>' : ''), pos: p });
     });
   }
   labelEls.forEach((el, k) => { if (!want.has(k)) { el.remove(); labelEls.delete(k); } });
@@ -715,10 +910,10 @@ function placeLabels() {
 }
 
 // ---------- navigation ----------
-// O endereço guarda onde a pessoa está (#A2-G1), para dar para mandar o link ou gerar um QR code da gaveta.
+// O endereço guarda onde a pessoa está (#G6A, #P3C-1), para dar para mandar o link ou gerar um QR code da gaveta.
 function setHash() {
   const c = S.view === 'cab' ? cabById(S.cabId) : null;
-  const h = c ? '#' + fullCode(c, S.slot) : '';
+  const h = c ? '#' + fullCode(c, S.slot) : '';   // #A3 or #P3C-1
   if (location.hash !== h) history.replaceState(null, '', h || location.pathname + location.search);
 }
 const HINT_LAB = 'Arraste para girar · role para aproximar · clique num armário';
@@ -728,32 +923,49 @@ function openLab() {
   if (camera) flyTo(goalForLab());
   applyOpenState(); paintSlots(); renderSheet(); renderCrumbs(); setHash();
   $('#hint').textContent = HINT_LAB;
+  $('#closeCab').hidden = true;
 }
 function openCab(id, slot) {
   const c = cabById(id); if (!c) return;
   S.view = 'cab'; S.cabId = id; S.slot = slot || null;
   camLimits = { rMin: 0.4, rMax: 8, phiMin: 0.3, phiMax: 1.62 };
-  if (camera) flyTo(goalForCab(c));
+  if (camera) flyTo(goalForBay(c, S.slot) || goalForCab(c));
   applyOpenState(); paintSlots(); renderSheet(); renderCrumbs(); setHash();
   $('#hint').textContent = c.forma === 'caixa' ? 'Clique num compartimento para ver o que tem nele' : 'Clique numa gaveta ou prateleira para ver o que tem nela';
+  // "Fechar armário", "Fechar gaveteiro", "Fechar maleta"…: o nome sai da primeira palavra do tipo
+  $('#closeCab span').textContent = 'Fechar ' + c.tipo.split(' ')[0].toLowerCase();
+  $('#closeCab').hidden = false;
 }
 function openSlot(code) {
+  const c = cabById(S.cabId), antes = goalForBay(c, S.slot) ? baia(S.slot) : null;
   S.slot = S.slot === code ? null : code;
+  // the camera moves only when going into or out of a compartment that has things inside
+  const depois = goalForBay(c, S.slot) ? baia(S.slot) : null;
+  if (antes !== depois) flyTo(goalForBay(c, S.slot) || goalForCab(c));
   applyOpenState(); paintSlots(); renderSheet(); renderCrumbs(); setHash();
 }
-$('#resetView').addEventListener('click', () => { if (!camera) return; flyTo(S.view === 'cab' ? goalForCab(cabById(S.cabId)) : goalForLab()); });
+$('#resetView').addEventListener('click', () => {
+  if (!camera) return;
+  const c = S.view === 'cab' ? cabById(S.cabId) : null;
+  flyTo(c ? goalForBay(c, S.slot) || goalForCab(c) : goalForLab());
+});
+// Fechar volta para o laboratório: as portas fecham e a câmera se afasta. Esc faz o mesmo, fora da busca.
+$('#closeCab').addEventListener('click', openLab);
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && S.view === 'cab' && !e.target.closest('input')) openLab(); });
 
 function renderCrumbs() {
   const el = $('#crumbs');
   const c = S.view === 'cab' ? cabById(S.cabId) : null;
   if (!c) { el.innerHTML = '<b>Laboratório</b>'; return; }
-  const s = S.slot ? slotsOf(c).find(x => x.code === S.slot) : null;
+  const sl = slotsOf(c), s = S.slot ? sl.find(x => x.code === S.slot) : null, pai = s && s.parent ? sl.find(x => x.code === s.parent) : null;
   el.innerHTML = '<button type="button" data-go="lab">Laboratório</button>›' +
-    (s ? '<button type="button" data-go="cab">' + esc(c.id) + '</button>›<b>' + esc(s.label) + '</b>' : '<b>' + esc(c.id) + '</b>');
+    (s ? '<button type="button" data-go="cab">' + esc(c.id) + '</button>›' +
+      (pai ? '<button type="button" data-go="slot" data-slot="' + esc(pai.code) + '">' + esc(pai.code) + '</button>›<b>' + esc(s.short) + '</b>' : '<b>' + esc(s.code) + ' · ' + esc(s.label) + '</b>')
+      : '<b>' + esc(c.id) + '</b>');
 }
 $('#crumbs').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
-  if (b.dataset.go === 'lab') openLab(); else openCab(S.cabId);
+  if (b.dataset.go === 'lab') openLab(); else if (b.dataset.go === 'slot') openSlot(b.dataset.slot); else openCab(S.cabId);
 });
 
 // ---------- side sheet ----------
@@ -762,11 +974,13 @@ function estadoChip(e) {
   const k = e === 'Novo' || e.startsWith('Usado') ? 'ok' : e === 'Não testado' ? 'warn' : e === 'Com defeito' ? 'bad' : '';
   return '<span class="chip ' + k + '">' + esc(e) + '</span>';
 }
-function itemCard(i) {
+// comLocal shows which bin the item is in, when the list is of a whole compartment
+function itemCard(i, comLocal) {
   const qty = i.qtd !== '' ? esc(i.qtd) + ' ' + esc(i.unid || '') : '';
   return '<li class="item"><div class="row1"><span class="name">' + esc(i.item) + '</span><span class="qty">' + qty + '</span></div>' +
     (i.espec ? '<div class="small muted">' + esc(i.espec) + '</div>' : '') +
-    '<div class="meta">' + (i.classificacao ? '<span class="chip">' + esc(i.classificacao) + '</span>' : '') + (i.categoria ? '<span class="chip">' + esc(i.categoria) + '</span>' : '') + estadoChip(i.estado) +
+    '<div class="meta">' + (comLocal ? '<span class="chip ok">' + esc(i.local) + '</span>' : '') +
+    (i.classificacao ? '<span class="chip">' + esc(i.classificacao) + '</span>' : '') + (i.categoria ? '<span class="chip">' + esc(i.categoria) + '</span>' : '') + estadoChip(i.estado) +
     (i.origem ? '<span class="chip">de ' + esc(i.origem) + '</span>' : '') + '</div>' +
     (i.obs ? '<div class="small muted">' + esc(i.obs) + '</div>' : '') +
     (i.conferido ? '<div class="small muted">Conferido em ' + esc(i.conferido) + '</div>' : '') +
@@ -774,16 +988,35 @@ function itemCard(i) {
 }
 
 function frontGrid(c) {
-  const sl = slotsOf(c);
+  const sl = slotsOf(c).filter(s => !s.parent);
   return '<div class="front' + (c.forma === 'caixa' ? ' box' : '') + '" role="group" aria-label="Compartimentos do ' + esc(c.id) + '">' +
     c.niveis.map((lv, li) => {
       const row = sl.filter(s => s.level === li);
       return '<div class="lv" style="grid-template-columns:repeat(' + row.length + ',minmax(0,1fr))">' + row.map(s => {
-        const n = itemsIn(c.id, s.code).length;
-        return '<button type="button" data-slot="' + s.code + '" class="' + (s.tipo === 'gaveta' ? 'drawer' : '') + (n ? ' has' : '') + (S.slot === s.code ? ' on' : '') + '" aria-pressed="' + (S.slot === s.code) + '" title="' + esc(s.label) + '">' +
+        const n = itemsIn(c.id, s.code).length, on = baia(S.slot) === s.code;
+        return '<button type="button" data-slot="' + s.code + '" class="' + (s.tipo === 'gaveta' ? 'drawer' : '') + (n ? ' has' : '') + (on ? ' on' : '') + '" aria-pressed="' + on + '" title="' + esc(s.label) + '">' +
           '<span>' + s.code + '</span><span class="c">' + (n || '–') + '</span></button>';
       }).join('') + '</div>';
     }).join('') + '</div>';
+}
+
+// The bins of a compartment drawn as they stand: one column per stack, top to bottom
+function binWall(c, bay) {
+  const grupos = caixinhas(c, bay); if (!grupos.length) return '';
+  const cols = [].concat(...grupos.map(g => g.colunas));
+  return '<div><h3 style="margin-bottom:8px">Caixinhas da ' + esc(bay) + '</h3><div class="front bins" role="group" aria-label="Caixinhas da ' + esc(bay) + '" style="height:' + Math.max(...cols.map(k => k.length)) * 48 + 'px">' +
+    cols.map(col => '<div class="bcol">' + col.map(b => {
+      if (!b) return '<div class="gap"></div>';
+      const n = itemsIn(c.id, b.code).length, on = S.slot === b.code;
+      return '<button type="button" data-slot="' + b.code + '" class="' + (n ? 'has' : '') + (on ? ' on' : '') + '" aria-pressed="' + on + '" title="' + esc(b.code + (b.etiqueta ? ' · ' + b.etiqueta : '')) + '">' +
+        '<span class="r1"><span>' + b.n + '</span><span class="c">' + (n || '–') + '</span></span>' +
+        '<span class="et' + (b.etiqueta ? '' : ' none') + '">' + esc(b.etiqueta || 'sem etiqueta') + '</span></button>';
+    }).join('') + '</div>').join('') + '</div></div>';
+}
+// What the model shows inside a compartment, so it is useful even before the stock sheet lists it
+function noModelo(c, bay) {
+  const nomes = ((c.dentro || {})[bay] || []).filter(o => o.obj !== 'caixinhas' && o.nome).map(o => o.nome);
+  return nomes.length ? '<div><h3 style="margin-bottom:6px">Aparece no modelo</h3><ul class="seen small">' + nomes.map(n => '<li>' + esc(n) + '</li>').join('') + '</ul></div>' : '';
 }
 
 // Aviso de quando o estoque ainda não foi lido. Os móveis aparecem de qualquer jeito, porque vêm do site.
@@ -817,7 +1050,7 @@ function renderSheet() {
       avisoEstoque() +
       '<div class="cablist">' + S.cabs.map(c => {
         const n = itemsIn(c.id).length;
-        return '<button class="cabrow" type="button" data-cab="' + esc(c.id) + '"><span class="num' + (c.forma === 'caixa' ? ' box' : '') + '">' + esc(c.numero) + '</span><span><b>' + esc(cabName(c)) + '</b><br><span class="small muted">' + esc(c.tipo) + ' · ' + slotsOf(c).length + ' compartimentos</span></span><span class="cnt">' + (S.loaded ? itensTxt(n) : '') + '</span></button>';
+        return '<button class="cabrow" type="button" data-cab="' + esc(c.id) + '"><span class="num' + (c.forma === 'caixa' ? ' box' : '') + '">' + esc(c.numero) + '</span><span><b>' + esc(cabName(c)) + '</b><br><span class="small muted">' + esc(c.tipo) + ' · ' + slotsOf(c).filter(s => !s.parent).length + ' compartimentos</span></span><span class="cnt">' + (S.loaded ? itensTxt(n) : '') + '</span></button>';
       }).join('') + '</div>' +
       '<p class="small muted">Clique num armário, no modelo ou na lista, para abrir as portas.</p>' +
       (semCab.length ? '<div class="loose"><h3>Sem armário no modelo</h3><p class="small muted">A coluna Armário destes itens não bate com nenhum móvel do modelo.</p><ul class="items">' + semCab.map(itemCard).join('') + '</ul></div>' : '') +
@@ -830,17 +1063,21 @@ function renderSheet() {
   const sl = slotsOf(c);
   const codes = new Set(sl.map(s => s.code));
   const loose = itemsIn(c.id).filter(i => !codes.has(i.local));
-  let html = '<div><h2>' + esc(cabName(c)) + '</h2><p class="small muted">' + esc(c.tipo) + ' · ' + sl.length + ' compartimentos' + (S.loaded ? ' · ' + itensTxt(itemsIn(c.id).length) : '') + '</p></div>';
+  const nBins = sl.filter(s => s.parent).length;
+  let html = '<div><h2>' + esc(cabName(c)) + '</h2><p class="small muted">' + esc(c.tipo) + ' · ' + (sl.length - nBins) + ' compartimentos' + (nBins ? ' e ' + nBins + ' caixinhas' : '') + (S.loaded ? ' · ' + itensTxt(itemsIn(c.id).length) : '') + '</p></div>';
   html += avisoEstoque();
   html += '<div><h3 style="margin-bottom:8px">' + (c.forma === 'caixa' ? 'Vista de cima, do fundo para a frente' : 'Frente do móvel') + '</h3>' + frontGrid(c) + '</div>';
 
   if (S.slot) {
     const s = sl.find(x => x.code === S.slot);
     const list = itemsIn(c.id, S.slot).sort((a, b) => String(a.item).localeCompare(String(b.item), 'pt'));
+    html += binWall(c, baia(S.slot));
     html += '<div style="display:grid;gap:10px"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span class="code">' + esc(fullCode(c, S.slot)) + '</span><b>' + esc(s ? s.label : S.slot) + '</b></div>';
+    if (s && s.parent) html += '<p class="small muted">' + (s.etiqueta ? 'Etiqueta: <b>' + esc(s.etiqueta) + '</b>' : 'A etiqueta desta caixinha ainda não está no modelo.') + '</p>';
+    else html += noModelo(c, S.slot);
     if (!S.loaded) html += '<div class="empty"><span>Ainda não consegui ler o estoque, então não sei o que tem aqui.</span></div>';
     else if (!list.length) html += '<div class="empty"><span>Nada cadastrado aqui ainda.</span><span class="small">Para cadastrar, escreva na aba Estoque da planilha: Armário <b>' + esc(c.id) + '</b> e Local no armário <b>' + esc(S.slot) + '</b>.</span></div>';
-    else html += '<ul class="items">' + list.map(itemCard).join('') + '</ul>';
+    else html += '<ul class="items">' + list.map(i => itemCard(i, i.local !== S.slot)).join('') + '</ul>';
     html += '</div>';
   } else {
     html += '<p class="muted">Escolha ' + (c.forma === 'caixa' ? 'um compartimento' : 'uma gaveta ou prateleira') + ', no modelo ou no desenho acima, para ver o que tem ' + (c.forma === 'caixa' ? 'nele' : 'nela') + '.</p>';
@@ -863,17 +1100,28 @@ $('#q').addEventListener('input', () => {
   const q = norm($('#q').value); const box = $('#results');
   if (!q) { box.hidden = true; return; }
   const hits = S.items.filter(i => norm([i.item, i.espec, i.categoria, i.obs, i.origem].join(' ')).includes(q)).slice(0, 30);
-  box.innerHTML = hits.length ? hits.map(i => {
+  // the model itself answers too: bin labels and the things drawn inside the compartments
+  const modelo = new Map();
+  S.cabs.forEach(c => {
+    slotsOf(c).forEach(s => { if (s.etiqueta && norm(s.etiqueta).includes(q)) modelo.set(s.code + s.etiqueta, { c, code: s.code, nome: s.etiqueta, onde: 'etiqueta da caixinha' }); });
+    Object.keys(c.dentro || {}).forEach(code => c.dentro[code].forEach(o => {
+      if (o.nome && norm(o.nome + ' ' + o.texto).includes(q)) modelo.set(code + o.nome, { c, code, nome: o.nome, onde: 'no modelo' });
+    }));
+  });
+  const doModelo = [...modelo.values()].slice(0, 20);
+  box.innerHTML = hits.map(i => {
     const c = cabById(i.cab);
     return '<button type="button" data-id="' + esc(i.id) + '"><span>' + esc(i.item) + (i.espec ? ' <span class="muted small">' + esc(i.espec) + '</span>' : '') + '</span><span class="code">' + esc(c ? fullCode(c, i.local) : '?') + '</span></button>';
-  }).join('') : '<div class="none">' + (S.loaded ? 'Nenhum item com “' + esc($('#q').value.trim()) + '”.' : 'O estoque ainda não foi lido.') + '</div>';
+  }).join('') + doModelo.map(m => '<button type="button" data-cab="' + esc(m.c.id) + '" data-slot="' + esc(m.code) + '"><span>' + esc(m.nome) + ' <span class="muted small">' + m.onde + '</span></span><span class="code">' + esc(m.code) + '</span></button>').join('') ||
+    '<div class="none">' + (S.loaded ? 'Nenhum item com “' + esc($('#q').value.trim()) + '”.' : 'Nada com “' + esc($('#q').value.trim()) + '” no modelo, e o estoque ainda não foi lido.') + '</div>';
   box.hidden = false;
 });
 $('#results').addEventListener('click', e => {
-  const b = e.target.closest('button[data-id]'); if (!b) return;
-  const it = S.items.find(i => i.id === b.dataset.id); if (!it) return;
+  const b = e.target.closest('button'); if (!b) return;
+  const it = b.dataset.id ? S.items.find(i => i.id === b.dataset.id) : null;
+  const cab = it ? it.cab : b.dataset.cab, slot = it ? it.local : b.dataset.slot;
   $('#results').hidden = true; $('#q').value = '';
-  if (cabById(it.cab)) openCab(it.cab, it.local);
+  if (cabById(cab)) openCab(cab, slot);
 });
 document.addEventListener('click', e => { if (!e.target.closest('.search')) $('#results').hidden = true; });
 $('#q').addEventListener('keydown', e => { if (e.key === 'Escape') { $('#results').hidden = true; $('#q').blur(); } });
@@ -931,20 +1179,26 @@ function montarItens(rows) {
   const porChave = new Map(S.cabs.map(c => [c.key, c.id]));
   return rows.filter(r => txt(get(r, 'item'))).map((r, i) => {
     const q = get(r, 'qtd');
-    return { id: 'i' + i, armario: txt(get(r, 'armario')), cab: porChave.get(chave(get(r, 'armario'))) || null,
-      local: txt(get(r, 'local')).toUpperCase().replace(/\s+/g, ''), item: txt(get(r, 'item')), espec: txt(get(r, 'especificacao')),
+    // "P3C 1", "P3C.1" e "P3C1" viram a caixinha P3C-1
+    const local = txt(get(r, 'local')).toUpperCase().replace(/\s+/g, '').replace(/^([PGC]\d+[A-Z])[._/]?(\d+)$/, '$1-$2');
+    // sem Armário, o número do código diz qual é o móvel
+    const arm = txt(get(r, 'armario')), doLocal = /^[PGC](\d+)/.exec(local);
+    return { id: 'i' + i, armario: arm, cab: porChave.get(chave(arm)) || (!arm && doLocal ? porChave.get('n' + +doLocal[1]) : null) || null,
+      local, item: txt(get(r, 'item')), espec: txt(get(r, 'especificacao')),
       qtd: q === '' ? '' : (typeof q === 'number' ? q.toLocaleString('pt-BR') : txt(q)), unid: txt(get(r, 'unid')),
       classificacao: txt(get(r, 'classificacao')), categoria: txt(get(r, 'categoria')), estado: txt(get(r, 'estado')),
       origem: txt(get(r, 'projeto')), conferido: txt(get(r, 'conferido')), obs: txt(get(r, 'observacoes')) };
   });
 }
 
+// #A3 abre o Armário 3 e #P3C-1 abre a caixinha 1 da P3C; o número do código diz qual é o móvel
 function fromHash() {
-  const h = decodeURIComponent((location.hash || '').slice(1)).toUpperCase();
-  const m = /^A(\d+)(?:-([PGC]\d+[A-J]?))?$/.exec(h);
+  const h = decodeURIComponent((location.hash || '').slice(1)).toUpperCase().replace(/\s+/g, '');
+  const m = /^A(\d+)$/.exec(h) || /^(?:A(\d+)-)?([PGC](\d+)[A-Z]?(?:-\d+)?)$/.exec(h);
   if (!m) return null;
-  const c = S.cabs.find(x => x.numero === String(+m[1]));
-  return c ? { cabId: c.id, slot: m[2] || null } : null;
+  const c = S.cabs.find(x => x.numero === String(+(m[1] || m[3])));
+  if (!c) return null;
+  return { cabId: c.id, slot: m[2] && slotsOf(c).some(s => s.code === m[2]) ? m[2] : null };
 }
 window.addEventListener('hashchange', () => { const h = fromHash(); if (h) openCab(h.cabId, h.slot); });
 

@@ -9,8 +9,22 @@
 //
 // niveis: de cima para baixo (numa caixa ou maleta, do fundo para a frente). divisoes separa o nível em colunas.
 // tamanho é a altura relativa do nível; sem ele, gaveta vale 0.6 e prateleira ou compartimento vale 1.
-// Os códigos usados na planilha saem daqui: P1, P2… para prateleiras, G1, G2… para gavetas, C1, C2… para compartimentos,
-// e uma letra para cada divisão (P1A, P1B).
+// Os códigos usados na planilha saem daqui e levam o número do móvel: P para prateleira, G para gaveta e C para
+// compartimento de caixa, o número do móvel e uma letra, contada de cima para baixo e da esquerda para a direita.
+// O Armário 3 tem P3A e P3B em cima e P3C e P3D embaixo; o Gaveteiro 6 tem G6A a G6D. Móvel com um só fica sem letra (C9).
+//
+// dentro: o que aparece dentro de cada compartimento, pelo código dele. Medidas em metros; x é a distância da parede
+// esquerda do compartimento, y a altura acima do fundo dele e recuo a distância da frente.
+//   "Caixa": caixa fechada. texto é o que vem impresso na frente (\n quebra a linha), transparente deixa ver dentro
+//            e cores pinta o que tem dentro, de cima para baixo.
+//   "Cesto": cesto aberto, com etiqueta na frente; ferramentas: true põe cabos de ferramenta saindo dele.
+//   "Cilindro": frasco ou pote; tampa é a cor da tampa ou do borrifador.
+//   "Terceira mão": base redonda com dois braços flexíveis.
+//   "Caixinhas": pilha de caixinhas organizadoras. colunas traz as etiquetas de cada coluna, da esquerda para a direita
+//            e de cima para baixo; "" é uma caixinha sem etiqueta conhecida e null é um espaço sem caixinha.
+//            Cada caixinha vira um compartimento: P3C-1, P3C-2…, contadas coluna por coluna, de cima para baixo.
+// O dentro do Armário 3 saiu da foto de 26/10/2026; as etiquetas vazias não deram para ler na foto.
+// Este arquivo é lido também como JSON pelo gerar_planilha.py: comentários só aqui em cima, fora do objeto.
 //
 // Depois de mudar este arquivo, gere a planilha de novo (ferramentas/gerar_planilha.py) para a lista de armários bater.
 window.LABORATORIO = {
@@ -27,7 +41,39 @@ window.LABORATORIO = {
       "niveis": [ { "tipo": "Prateleira", "divisoes": 2 }, { "tipo": "Prateleira", "divisoes": 2 } ] },
     { "armario": "Armário 3", "nome": "Solda e componentes", "tipo": "Armário de parede",
       "largura": 1.05, "altura": 0.85, "fundo": 0.40, "x": 2.625, "z": 0.20, "altura_do_chao": 1.55, "giro": 0,
-      "niveis": [ { "tipo": "Prateleira", "divisoes": 2 }, { "tipo": "Prateleira", "divisoes": 2 } ] },
+      "niveis": [ { "tipo": "Prateleira", "divisoes": 2 }, { "tipo": "Prateleira", "divisoes": 2 } ],
+      "dentro": {
+        "P3A": [
+          { "objeto": "Caixa", "nome": "Estação de retrabalho Yaxun (solda e ar quente)", "texto": "YAXUN\nREWORK STATION", "cor": "#2c5cae",
+            "largura": 0.33, "altura": 0.15, "fundo": 0.28, "x": 0, "y": 0 },
+          { "objeto": "Caixa", "nome": "Estação de retrabalho SMD Yaxun (ar quente)", "texto": "YAXUN\nSMD REWORK", "cor": "#1d1e21",
+            "largura": 0.16, "altura": 0.14, "fundo": 0.24, "x": 0.335, "y": 0 },
+          { "objeto": "Caixa", "nome": "Estação de retrabalho SMD Yaxun (ar quente)", "texto": "YAXUN\nSMD REWORK STATION", "cor": "#1d1e21",
+            "largura": 0.31, "altura": 0.15, "fundo": 0.26, "x": 0.02, "y": 0.15 },
+          { "objeto": "Caixa", "nome": "Caixa vermelha", "cor": "#8b3527",
+            "largura": 0.13, "altura": 0.165, "fundo": 0.22, "x": 0.335, "y": 0.15, "recuo": 0.07 }
+        ],
+        "P3B": [
+          { "objeto": "Caixa", "nome": "Caixa Yaxun", "cor": "#1d1e21", "largura": 0.045, "altura": 0.15, "fundo": 0.26, "x": 0 },
+          { "objeto": "Caixa", "nome": "Organizador de termo retrátil", "transparente": true, "cores": ["#2a2c30", "#d9b21f", "#c8394f"],
+            "largura": 0.045, "altura": 0.145, "fundo": 0.10, "x": 0.05 },
+          { "objeto": "Caixa", "nome": "Estojo transparente", "transparente": true, "cores": ["#3a3d42"],
+            "largura": 0.05, "altura": 0.085, "fundo": 0.12, "x": 0.10 },
+          { "objeto": "Terceira mão", "nome": "Terceira mão com limpador de ponta", "cor": "#b59a45",
+            "largura": 0.08, "altura": 0.17, "x": 0.155 },
+          { "objeto": "Cesto", "nome": "Cesto de solda (ferro, alicates e chaves)", "etiqueta": "Solda", "cor": "#e8c3c7", "ferramentas": true,
+            "largura": 0.27, "altura": 0.13, "fundo": 0.20, "x": 0.225 }
+        ],
+        "P3C": [
+          { "objeto": "Caixinhas", "altura": 0.40, "fundo": 0.24,
+            "colunas": [ ["", "", "Cola quente", ""], ["", "Terminais", "", ""], ["", "Cabos", "Arduino", "Cabos USB do Arduino"], [null, "", "", ""] ] }
+        ],
+        "P3D": [
+          { "objeto": "Caixinhas", "largura": 0.43, "altura": 0.30, "fundo": 0.24,
+            "colunas": [ ["Fita crepe", "Protoboard", ""], ["Fita isolante", "", ""], ["", "Pilhas", ""], ["Jumpers", "Jumpers", "Jumpers", "Jumpers"] ] },
+          { "objeto": "Cilindro", "nome": "Borrifador", "transparente": true, "tampa": "#2f8fd8", "largura": 0.05, "altura": 0.19, "x": 0.44 }
+        ]
+      } },
     { "armario": "Armário 4", "nome": "Maletas de ferramentas", "tipo": "Armário de parede",
       "largura": 1.05, "altura": 0.85, "fundo": 0.40, "x": 3.675, "z": 0.20, "altura_do_chao": 1.55, "giro": 0,
       "niveis": [ { "tipo": "Prateleira", "divisoes": 2 }, { "tipo": "Prateleira", "divisoes": 2 } ] },

@@ -15,31 +15,34 @@ O site lê a planilha sozinho a cada minuto. Ninguém edita pelo site.
 
 Os móveis foram modelados a partir das fotos de 26/10/2026, com medidas estimadas pelas fotos. São 5 armários de parede, a bancada branca (gaveteiro 6 e armário 7), a bancada preta (gaveteiro volante 8, caixa preta 9, gaveteiro 10 e armário 11) e a maleta 12, em cima da bancada branca.
 
+O Armário 3 também tem o que está dentro dele: as caixas das estações de retrabalho Yaxun, o cesto de solda, a terceira mão e as duas pilhas de caixinhas, com as etiquetas que deu para ler na foto.
+
 Para o site conseguir ler o estoque, a planilha precisa estar compartilhada como **Qualquer pessoa com o link: Leitor**. Quem vai cadastrar itens precisa ser adicionado como **Editor**. Se a planilha estiver fechada, o modelo aparece do mesmo jeito, só que sem os itens.
 
 ## Códigos dos compartimentos
 
-Na coluna Local no armário da planilha vai o código do compartimento, contado de cima para baixo:
+Na coluna Local no armário da planilha vai o código do compartimento. Ele leva o número do móvel, então cada código existe uma vez só no laboratório:
 
 | Código | O que é |
 |---|---|
-| `G1`, `G2`… | Gavetas |
-| `P1`, `P2`… | Prateleiras. Com divisória, `P1A` é o lado esquerdo e `P1B` o direito |
-| `C1`, `C2`… | Compartimentos de caixa e maleta, do fundo para a frente. `C1A` a `C1D` são as 4 divisões da bandeja da maleta |
+| `P3A`, `P3B`, `P3C`, `P3D` | Prateleiras do Armário 3, de cima para baixo e da esquerda para a direita: `P3A` e `P3B` em cima, `P3C` e `P3D` embaixo |
+| `G6A` a `G6D` | Gavetas do Gaveteiro 6, de cima para baixo |
+| `C12A` a `C12E` | Compartimentos da Maleta 12, do fundo para a frente. Um móvel com um compartimento só fica sem letra: `C9` |
+| `P3C-1`, `P3C-2`… | Caixinhas dentro de um compartimento, contadas coluna por coluna, da esquerda para a direita e de cima para baixo |
 
-A aba Locais da planilha lista os códigos de cada móvel.
+A aba Locais da planilha lista os códigos de cada móvel. Se a coluna Armário ficar vazia, o site acha o móvel pelo número do código.
 
 ## Link direto para uma gaveta
 
-O endereço do site guarda onde a pessoa está. `#A6-G1` abre o Gaveteiro 6 com a Gaveta 1 puxada:
+O endereço do site guarda onde a pessoa está. `#G6A` abre o Gaveteiro 6 com a primeira gaveta puxada, e `#A6` abre só o gaveteiro:
 
-https://bliss-vital.github.io/armarios-neon/#A6-G1
+https://bliss-vital.github.io/armarios-neon/#G6A
 
-O número depois do `A` é o número do móvel. Esse link pode virar um QR code colado na gaveta.
+Esse link pode virar um QR code colado na gaveta.
 
 ## Mudar um móvel
 
-Edite `laboratorio.js`. O começo do arquivo explica cada campo. Depois gere a planilha modelo de novo, para as abas Locais e Listas acompanharem:
+Edite `laboratorio.js`. O começo do arquivo explica cada campo, inclusive o `dentro`, que desenha o que fica dentro de um compartimento e cria as caixinhas. Depois gere a planilha modelo de novo, para as abas Locais e Listas acompanharem:
 
 ```bash
 python ferramentas/gerar_planilha.py ferramentas/planilha_armarios_neon.xlsx https://bliss-vital.github.io/armarios-neon/
@@ -52,4 +55,4 @@ python ferramentas/gerar_planilha.py ferramentas/planilha_armarios_neon.xlsx htt
 | `index.html` | O site inteiro, com Three.js r128 carregado do cdnjs |
 | `laboratorio.js` | Os móveis do laboratório |
 | `ferramentas/gerar_planilha.py` | Gera a planilha modelo em `.xlsx`, usada para criar a do Google |
-| `ferramentas/planilha_armarios_neon.xlsx` | A planilha modelo gerada, com os itens que deu para ver na foto da maleta |
+| `ferramentas/planilha_armarios_neon.xlsx` | A planilha modelo gerada, com os itens que deu para ver nas fotos da maleta e do Armário 3 |
