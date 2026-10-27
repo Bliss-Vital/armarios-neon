@@ -56,6 +56,7 @@ python ferramentas/gerar_planilha.py ferramentas/planilha_armarios_neon.xlsx htt
 |---|---|
 | `index.html` | O site inteiro, com Three.js r128 carregado do cdnjs |
 | `laboratorio.js` | Os móveis do laboratório |
+| `ANDAMENTO.md` | O que o site já tem e o que ainda falta fazer |
 | `imagens/` | Fotos que o site mostra ao clicar numa coisa ou num item. As fotos do laboratório, em `fotos/`, não são publicadas |
 | `ferramentas/gerar_planilha.py` | Gera a planilha modelo em `.xlsx`, usada para criar a do Google |
 | `ferramentas/planilha_armarios_neon.xlsx` | A planilha modelo gerada, com os itens que deu para ver nas fotos da maleta, do Armário 3 e do cesto de solda, e a garra azul de solda |
